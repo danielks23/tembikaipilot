@@ -7,9 +7,9 @@ import psutil
 from openpilot.common.swaglog import cloudlog
 
 # Memory thresholds
-MEMORY_WARNING_THRESHOLD = 85  # Start taking action at 85%
-MEMORY_CRITICAL_THRESHOLD = 90  # Critical threshold - same as controlsd
-MEMORY_EMERGENCY_THRESHOLD = 95  # Emergency - clear everything possible
+MEMORY_WARNING_THRESHOLD = 75  # Start taking action at 75%
+MEMORY_CRITICAL_THRESHOLD = 80  # Critical threshold - same as controlsd
+MEMORY_EMERGENCY_THRESHOLD = 85  # Emergency - clear everything possible
 
 def get_memory_usage_percent() -> int:
   """Get current memory usage percentage."""
@@ -70,17 +70,17 @@ def clear_filesystem_cache() -> None:
 def handle_memory_pressure(clear_caches: bool = True, clear_fs_cache: bool = False) -> dict:
   """
   Handle memory pressure by clearing caches and returning status.
-  
+
   Args:
     clear_caches: If True, clear application caches (xattr cache)
     clear_fs_cache: If True, attempt to clear filesystem page cache (requires root)
-  
+
   Returns:
     dict with memory usage info and actions taken
   """
   mem_percent = get_memory_usage_percent()
   mem_info = psutil.virtual_memory()
-  
+
   result = {
     "memory_percent": mem_percent,
     "memory_available_mb": mem_info.available // (1024 * 1024),
@@ -88,21 +88,21 @@ def handle_memory_pressure(clear_caches: bool = True, clear_fs_cache: bool = Fal
     "xattr_cache_cleared": 0,
     "fs_cache_cleared": False,
   }
-  
+
   if is_memory_pressure_high():
     if clear_caches:
       result["xattr_cache_cleared"] = clear_xattr_cache()
-    
+
     if clear_fs_cache and is_memory_pressure_critical():
       clear_filesystem_cache()
       result["fs_cache_cleared"] = True
-    
+
     cloudlog.warning(
       f"Memory pressure detected: {mem_percent}% used, "
       f"{result['memory_available_mb']}MB available. "
       f"Cleared {result['xattr_cache_cleared']} cache entries."
     )
-  
+
   return result
 
 def should_skip_filesystem_operation() -> bool:
