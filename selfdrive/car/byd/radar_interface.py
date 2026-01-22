@@ -22,10 +22,11 @@ MISS_MAX = 15          # Delete tracks after 15 missed frames (increased from 4 
 # --- Plausibility gates ---
 DREL_MIN = 0.75        # near-field radar ghosts
 DREL_MAX = 200.0
-# Filter side-lane vehicles to prevent phantom braking
-# Balanced at 1.5m - allows legitimate vehicles while filtering obvious side-lane vehicles
-# Typical lane width ~3.5m, so 1.5m = center ~43% (reasonable for lane keeping)
-YREL_ABS_MAX = 1.5     # Balanced: filter obvious side-lane vehicles (>1.5m) while allowing legitimate vehicles
+# Speed-adaptive lateral filtering (calculated dynamically below)
+# Base values:
+YREL_BASE_URBAN = 2.0   # < 32 kph (urban) - looser for low speed maneuvers
+YREL_BASE_HIGHWAY = 1.5 # < 80 kph (highway) - balanced
+YREL_BASE_HIGH = 1.2    # high speed - tighter, more critical
 VREL_ABS_MAX = 60.0
 AREL_ABS_MAX = 12.0
 
@@ -59,6 +60,27 @@ class RadarInterface(RadarInterfaceBase):
     # Key: track_id, Value: (dRel, yRel, vRel, miss_frames)
     self.track_history: dict[int, tuple[float, float, float, int]] = {}
     self.MAX_HISTORY_FRAMES = 10  # Keep history for up to 10 frames after track disappears
+    
+    # Track quality: velocity consistency score for confidence calculation
+    self.track_consistency: dict[int, float] = {}  # track_id -> consistency score (0.0-1.0)
+
+  def _get_yrel_max(self, dRel: float, v_ego: float) -> float:
+    """Calculate lateral threshold based on speed and distance"""
+    # Base thresholds by speed
+    if v_ego < 8.9:  # < 32 kph (urban)
+      base_yrel = YREL_BASE_URBAN
+    elif v_ego < 22.2:  # < 80 kph (highway)
+      base_yrel = YREL_BASE_HIGHWAY
+    else:  # High speed
+      base_yrel = YREL_BASE_HIGH
+
+    # Distance modifier: stricter for far targets
+    if dRel > 50:
+      return base_yrel * 0.6  # Very strict for distant vehicles
+    elif dRel > 30:
+      return base_yrel * 0.7
+    else:
+      return base_yrel
 
   def update(self, can_strings, v_ego, a_ego):
     if self.rcp is None:
@@ -174,10 +196,8 @@ class RadarInterface(RadarInterfaceBase):
       vRel = vlead - v_ego
       aRel = alead - a_ego
 
-      # Balanced filtering: YREL_ABS_MAX set to 1.5m
-      # This filters out obvious side-lane vehicles while allowing legitimate vehicles
-      # Additional check: For vehicles further than 30m, require stricter lateral filtering
-      yrel_max = YREL_ABS_MAX if dRel <= 30.0 else YREL_ABS_MAX * 0.7  # Stricter for far vehicles (1.05m)
+      # Speed-adaptive lateral filtering
+      yrel_max = self._get_yrel_max(dRel, v_ego)
 
       plausible = (
         meas_ok and
@@ -240,6 +260,13 @@ class RadarInterface(RadarInterfaceBase):
           # Track exists - remove from history if it was there
           track_id = self.pts[slot].trackId
           self.track_history.pop(track_id, None)
+          # Track velocity consistency for confidence scoring
+          prev_vRel = self.pts[slot].vRel
+          vRel_delta = abs(vRel - prev_vRel)
+          # Store consistency score in a separate dict (RadarPoint doesn't have this field)
+          if not hasattr(self, 'track_consistency'):
+            self.track_consistency = {}
+          self.track_consistency[track_id] = max(0, self.track_consistency.get(track_id, 1.0) - vRel_delta * 0.1)
 
         pt = self.pts[slot]
         pt.measured = True
@@ -248,6 +275,14 @@ class RadarInterface(RadarInterfaceBase):
         pt.vRel = vRel
         pt.aRel = aRel
         pt.yvRel = float("nan")
+        
+        # Calculate and log confidence score (for future use when RadarData supports it)
+        # Confidence based on: persistence (how long track has been valid) and velocity consistency
+        if self.valid_cnt[slot] > 0:
+          persistence_score = min(1.0, self.valid_cnt[slot] / 10.0)  # Max at 10 frames
+          velocity_score = self.track_consistency.get(pt.trackId, 1.0)
+          confidence = persistence_score * 0.6 + velocity_score * 0.4  # Weight persistence more
+          # TODO: Export confidence when RadarData schema supports it
 
       elif keep_alive:
         # Track exists but filtering failed temporarily - keep it alive
