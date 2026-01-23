@@ -60,16 +60,6 @@ def create_accel_command(packer, accel, enabled, accel_mult, brake_hold):
 # 50hz
 def create_lkas_hud(packer, lat_active, lss_state, lss_alert, tsr, ahb, passthrough,\
     hma, pt2, pt3, pt4, pt5, lka_on, car_fingerprint=None):
-  # Nag suppression strategy by model:
-  # - M6: Always suppress (has torque spoof to simulate hands-on)
-  # - ATTO3/SEAL/SEALION7: Suppress for convenience (no torque spoof, just HUD manipulation)
-  # Note: ATTO3/SEAL may eventually detect this mismatch and fault
-  from openpilot.selfdrive.car.byd.values import CAR
-
-  # Always suppress nag when lateral is active
-  # M6 has torque spoof backing this up, others rely on HUD suppression alone
-  hand_on_wheel_warning = 0 if lat_active else 1
-
   values = {
     "STEER_ACTIVE_ACTIVE_LOW": lka_on,
     "LEFT_LANE_VISIBLE": lat_active,
@@ -81,7 +71,7 @@ def create_lkas_hud(packer, lat_active, lss_state, lss_alert, tsr, ahb, passthro
     "TSR_STATUS": passthrough,
     "SET_ME_XFF": ahb,
     # TODO integrate warning signs when steer limited
-    "HAND_ON_WHEEL_WARNING": hand_on_wheel_warning,
+    "HAND_ON_WHEEL_WARNING": 0,
     "TSR": tsr,
     "HMA": hma,
     "PT2": pt2,
@@ -134,12 +124,12 @@ def create_steering_torque_spoof_camera(packer, lat_active, main_torque, spoof, 
       _torque_spoof_state['next_cycle_length'] = random.randint(120, 180)  # 1.2-1.8s at 100Hz
       _torque_spoof_state['next_duration'] = random.randint(40, 60)  # 0.4-0.6s
       _torque_spoof_state['pattern'] = random.randint(0, 2)  # Choose pattern
-    
+
     _torque_spoof_state['frame_counter'] += 1
-    
+
     # Correlate torque with actual steering angle changes for realism
     steering_activity_factor = 1.0 + min(abs(steering_angle_rate) * 0.1, 0.5)
-    
+
     # Generate pattern-based torque offset
     phase = _torque_spoof_state['frame_counter'] / _torque_spoof_state['next_duration']
     if _torque_spoof_state['frame_counter'] < _torque_spoof_state['next_duration']:
@@ -150,7 +140,7 @@ def create_steering_torque_spoof_camera(packer, lat_active, main_torque, spoof, 
         base_torque = _torque_spoof_state['max_torque'] * (1.0 - abs(2.0 * phase - 1.0)) if phase < 1.0 else 0.0
       else:  # Square wave (original)
         base_torque = _torque_spoof_state['max_torque']
-      
+
       _torque_spoof_state['target_torque'] = base_torque * steering_activity_factor
       # Occasionally apply negative torque for bidirectional realism
       if random.random() < 0.15:
