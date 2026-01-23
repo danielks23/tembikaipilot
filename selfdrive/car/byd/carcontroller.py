@@ -50,14 +50,14 @@ class CarController(CarControllerBase):
     
     # Per-model steering rate limits (degrees/sec) for fine-tuned control
     self.rate_limits = {
-      CAR.ATTO_3: {'up_low': 3, 'down_low': 5, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},  # Reduced low-speed to prevent oscillation
+      CAR.ATTO3: {'up_low': 3, 'down_low': 5, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},  # Reduced low-speed to prevent oscillation
       CAR.SEAL: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
-      CAR.SEALION_7: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
+      CAR.SEALION7: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
       CAR.M6: {'up_low': 5, 'down_low': 7, 'up_mid': 2.5, 'down_mid': 6, 'up_high': 0.8, 'down_high': 3.5},  # More conservative
     }
     
     # Get model-specific rate limits, fallback to ATTO_3 (most conservative) for unknown models
-    limits = self.rate_limits.get(CP.carFingerprint, self.rate_limits[CAR.ATTO_3])
+    limits = self.rate_limits.get(CP.carFingerprint, self.rate_limits[CAR.ATTO3])
     
     # Create per-model AngleRateLimit objects for use with apply_std_steer_angle_limits
     # Speed breakpoints: 0 kph (up_low), 5 kph (up_mid), 15 kph (up_high)
@@ -160,7 +160,7 @@ class CarController(CarControllerBase):
         
         # Update params with adaptive multiplier
         if self.rate_multiplier < 0.99:
-          limits = self.rate_limits.get(self.CP.carFingerprint, self.rate_limits[CAR.ATTO_3])
+          limits = self.rate_limits.get(self.CP.carFingerprint, self.rate_limits[CAR.ATTO3])
           self.params.ANGLE_RATE_LIMIT_UP = AngleRateLimit(
             speed_bp=[0., 1.4, 4.2],
             angle_v=[limits['up_low'] * self.rate_multiplier, limits['up_mid'] * self.rate_multiplier, limits['up_high']]
