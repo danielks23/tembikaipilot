@@ -53,7 +53,7 @@ class CarController(CarControllerBase):
 
     # Per-model steering rate limits (degrees/sec) for fine-tuned control
     self.rate_limits = {
-      CAR.ATTO3: {'up_low': 3, 'down_low': 5, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},  # Reduced low-speed to prevent oscillation
+      CAR.ATTO3: {'up_low': 5, 'down_low': 7, 'up_mid': 3.5, 'down_mid': 7, 'up_high': 1.5, 'down_high': 4.5},  # Increased for adequate steering response
       CAR.SEAL: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
       CAR.SEALION7: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
       CAR.M6: {'up_low': 5, 'down_low': 7, 'up_mid': 2.5, 'down_mid': 6, 'up_high': 0.8, 'down_high': 3.5},  # More conservative
