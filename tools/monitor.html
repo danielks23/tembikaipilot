@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KA2 Web Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            padding: 15px 0;
+            font-size: 24px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .status.error {
+            border-left-color: #f44336;
+        }
+        .data-section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .data-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #444;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .label {
+            color: #888;
+            font-weight: bold;
+        }
+        .value {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .alert {
+            background: #ff5722;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .hidden {
+            display: none;
+        }
+        .speed-display {
+            text-align: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #4CAF50;
+            padding: 20px;
+        }
+        .speed-label {
+            font-size: 16px;
+            color: #888;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        #laneCanvas {
+            width: 100%;
+            height: 600px;
+            max-height: 70vh;
+            background: #0a0a0a;
+            border-radius: 8px;
+            display: block;
+        }
+        @media (min-width: 1200px) {
+            #laneCanvas {
+                height: 700px;
+            }
+        }
+        @media (max-width: 768px) {
+            #laneCanvas {
+                height: 400px;
+            }
+        }
+        .canvas-container {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .canvas-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+        .canvas-legend {
+            flex-shrink: 0;
+            width: 200px;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .canvas-legend h4 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        @media (max-width: 768px) {
+            .canvas-container {
+                flex-direction: column;
+            }
+            .canvas-legend {
+                width: 100%;
+            }
+        }
+        .playback-controls {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #2196F3;
+        }
+        .playback-controls h3 {
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        .playback-controls button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .playback-controls button:hover {
+            background: #1976D2;
+        }
+        .playback-controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .playback-controls select, .playback-controls input {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #666;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .timeline {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .mode-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .mode-live {
+            background: #4CAF50;
+            color: white;
+        }
+        .mode-playback {
+            background: #2196F3;
+            color: white;
+        }
+        .connection-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin-right: 5px;
+        }
+        .connection-status.disconnected {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 KA2 Web Monitor<span id="modeIndicator" class="mode-badge mode-live">● LIVE</span></h1>
+
+        <div class="playback-controls">
+            <h3>📼 Playback Controls</h3>
+            <div>
+                <button onclick="loadLogList()">🔄 Refresh Logs</button>
+                <select id="logSelect" onchange="selectLog()">
+                    <option value="">-- Select a log to replay --</option>
+                </select>
+                <button id="loadLogBtn" onclick="loadLog()" disabled>📂 Load</button>
+            </div>
+            <div id="playbackButtons" style="display:none; margin-top:10px;">
+                <button id="playPauseBtn" onclick="playPause()">▶️ Play</button>
+                <button onclick="stopPlayback()">⏹️ Stop</button>
+                <button onclick="changeSpeed(-1)">🐢 Slower</button>
+                <button onclick="changeSpeed(1)">🐇 Faster</button>
+                <span id="speedDisplay" style="margin-left:10px;">Speed: 1x</span>
+            </div>
+            <input type="range" id="timeline" class="timeline" min="0" max="100" value="0" oninput="seekTimeline()" style="display:none;">
+            <div id="playbackInfo" style="margin-top:10px; color:#2196F3;"></div>
+        </div>
+
+        <div class="status">
+            <span class="connection-status" id="connStatus"></span>
+            <strong>Status:</strong> <span id="statusText">Connecting...</span>
+        </div>
+
+        <div id="alertBox" class="alert hidden"></div>
+
+        <div class="speed-display">
+            <div><span id="speed">--</span> <span class="speed-label">km/h</span></div>
+            <div style="font-size: 20px; color: #888; margin-top: 10px;">
+                Cruise: <span id="cruise">--</span> <span class="speed-label">km/h</span>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <canvas id="laneCanvas"></canvas>
+            </div>
+            <div class="canvas-legend">
+                <h4>Legend</h4>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #4CAF50; height: 5px;"></div>
+                    <span>Planned Path</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: rgba(255, 255, 255, 0.95); height: 4px;"></div>
+                    <span>Your Lane</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: rgba(255, 50, 50, 0.8); height: 3px; border: 1px dashed white; box-sizing: border-box;"></div>
+                    <span>Adjacent Lanes</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 20px; background: #4CAF50; margin-right: 10px; border-radius: 2px; border: 2px solid white;"></div>
+                    <span>Your Car (Engaged)</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 20px; background: #666; margin-right: 10px; border-radius: 2px; border: 2px solid white;"></div>
+                    <span>Your Car (Off)</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 20px; background: #ffeb3b; margin-right: 10px; border-radius: 2px; border: 2px solid white;"></div>
+                    <span>Lead Car (Normal)</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 20px; background: #ff9800; margin-right: 10px; border-radius: 2px; border: 2px solid white;"></div>
+                    <span>Lead Car (Closing)</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 20px; background: #f44336; margin-right: 10px; border-radius: 2px; border: 2px solid white;"></div>
+                    <span>Lead Car (FCW!)</span>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 3px; background: #FFD700; margin-right: 10px;"></div>
+                    <span>Steering Direction</span>
+                </div>
+            </div>
+            <div class="canvas-legend" style="margin-top: 15px;">
+                <h4>🧠 Bukapilot Thinking</h4>
+                <div style="margin-bottom: 15px;">
+                    <div style="color: #FFD700; font-size: 13px; margin-bottom: 5px;">Steering Torque</div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div style="flex: 1; height: 20px; background: #333; border-radius: 3px; position: relative;">
+                            <div id="steeringTorqueBar" style="position: absolute; height: 100%; background: #FFD700; border-radius: 3px; transition: all 0.1s;"></div>
+                            <div style="position: absolute; left: 50%; width: 2px; height: 100%; background: #fff;"></div>
+                        </div>
+                        <span id="steeringTorqueVal" style="color: #fff; font-size: 12px; min-width: 55px; text-align: right;">0.00 Nm</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <div style="color: #4CAF50; font-size: 13px; margin-bottom: 5px;">Gas</div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div style="flex: 1; height: 20px; background: #333; border-radius: 3px; overflow: hidden;">
+                            <div id="gasBar" style="height: 100%; background: #4CAF50; width: 0%; transition: width 0.1s;"></div>
+                        </div>
+                        <span id="gasVal" style="color: #fff; font-size: 12px; min-width: 35px; text-align: right;">0%</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <div style="color: #f44336; font-size: 13px; margin-bottom: 5px;">Brake</div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div style="flex: 1; height: 20px; background: #333; border-radius: 3px; overflow: hidden;">
+                            <div id="brakeBar" style="height: 100%; background: #f44336; width: 0%; transition: width 0.1s;"></div>
+                        </div>
+                        <span id="brakeVal" style="color: #fff; font-size: 12px; min-width: 35px; text-align: right;">0%</span>
+                    </div>
+                </div>
+                <div style="color: #2196F3; font-size: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+                    State: <span id="longState2" style="color: #fff;">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="data-section">
+                <h3>🎮 System State</h3>
+                <div class="metric">
+                    <span class="label">State:</span>
+                    <span class="value" id="state">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Enabled:</span>
+                    <span class="value" id="enabled">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Engageable:</span>
+                    <span class="value" id="engageable">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Experimental:</span>
+                    <span class="value" id="experimental">-</span>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <h3>⚡ Control</h3>
+                <div class="metric">
+                    <span class="label">Active:</span>
+                    <span class="value" id="active">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Long State:</span>
+                    <span class="value" id="longState">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">CAN Errors:</span>
+                    <span class="value" id="canErrors">-</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Personality:</span>
+                    <span class="value" id="personality">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🚙 Car Inputs</h3>
+            <div class="grid">
+                <div>
+                    <div class="metric">
+                        <span class="label">Steering:</span>
+                        <span class="value" id="steering">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Pressed:</span>
+                        <span class="value" id="steeringPressed">-</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="metric">
+                        <span class="label">Gas:</span>
+                        <span class="value" id="gas">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Brake:</span>
+                        <span class="value" id="brake">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="metric">
+                <span class="label">Gear:</span>
+                <span class="value" id="gear">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Blinkers:</span>
+                <span class="value" id="blinkers">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🚙 Lead Car</h3>
+            <div class="metric">
+                <span class="label">Distance:</span>
+                <span class="value" id="leadDist">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Velocity:</span>
+                <span class="value" id="leadVel">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">FCW:</span>
+                <span class="value" id="fcw">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>👁️ Driver Monitoring</h3>
+            <div class="metric">
+                <span class="label">Active:</span>
+                <span class="value" id="dmActive">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Face Detected:</span>
+                <span class="value" id="faceDetected">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Distracted:</span>
+                <span class="value" id="distracted">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Awareness:</span>
+                <span class="value" id="awareness">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>📊 System Info</h3>
+            <div class="metric">
+                <span class="label">Dongle ID:</span>
+                <span class="value" id="dongleId">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Offroad:</span>
+                <span class="value" id="offroad">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Last Update:</span>
+                <span class="value" id="lastUpdate">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🔥 Device Health</h3>
+            <div class="metric">
+                <span class="label">CPU Temp:</span>
+                <span class="value" id="cpuTemp">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Memory:</span>
+                <span class="value" id="memory">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Battery:</span>
+                <span class="value" id="battery">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Storage Free:</span>
+                <span class="value" id="storage">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>📍 GPS</h3>
+            <div class="metric">
+                <span class="label">GPS Speed:</span>
+                <span class="value" id="gpsSpeed">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Accuracy:</span>
+                <span class="value" id="gpsAccuracy">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Altitude:</span>
+                <span class="value" id="gpsAltitude">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Bearing:</span>
+                <span class="value" id="gpsBearing">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🧠 Model Confidence</h3>
+            <div class="metric">
+                <span class="label">Left Lane:</span>
+                <span class="value" id="laneL">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Right Lane:</span>
+                <span class="value" id="laneR">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Exec Time:</span>
+                <span class="value" id="modelTime">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🔌 Panda/CAN Health</h3>
+            <div class="metric">
+                <span class="label">Voltage:</span>
+                <span class="value" id="pandaVoltage">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Current:</span>
+                <span class="value" id="pandaCurrent">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">CAN RX Errors:</span>
+                <span class="value" id="canRxErrors">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">CAN TX Errors:</span>
+                <span class="value" id="canTxErrors">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🎮 Lateral Control</h3>
+            <div class="metric">
+                <span class="label">Desired Angle:</span>
+                <span class="value" id="desiredAngle">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Actual Angle:</span>
+                <span class="value" id="actualAngle">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Curvature:</span>
+                <span class="value" id="curvature">-</span>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>📐 Calibration</h3>
+            <div class="metric">
+                <span class="label">Status:</span>
+                <span class="value" id="calStatus">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Roll:</span>
+                <span class="value" id="calRoll">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Pitch:</span>
+                <span class="value" id="calPitch">-</span>
+            </div>
+            <div class="metric">
+                <span class="label">Yaw:</span>
+                <span class="value" id="calYaw">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastUpdateTime = 0;
+        let updateInterval;
+
+        const personalities = ['Aggressive', 'Standard', 'Relaxed'];
+
+        // Playback state
+        let playbackMode = false;
+        let playbackData = [];
+        let playbackIndex = 0;
+        let playbackSpeed = 1;
+        let playbackPlaying = false;
+        let playbackIntervalId = null;
+
+        // Canvas setup with responsive sizing
+        const canvas = document.getElementById('laneCanvas');
+        const ctx = canvas.getContext('2d');
+        let canvasWidth, canvasHeight;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+            // Redraw with current data if available
+            if (window.lastData) {
+                drawLaneView(window.lastData);
+            }
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawLaneView(data) {
+            // Store for resize redraws
+            window.lastData = data;
+
+            // Clear canvas
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // Calculate adaptive view distance based on actual data
+            let maxDistance = 40; // Default minimum view
+
+            // Check detected lanes for maximum distance
+            if (data.detectedLanes && data.detectedLanes.length > 0) {
+                data.detectedLanes.forEach(lane => {
+                    if (lane && lane.length > 0) {
+                        const maxLaneX = Math.max(...lane.map(p => p.x));
+                        maxDistance = Math.max(maxDistance, maxLaneX * 1.2); // Add 20% buffer
+                    }
+                });
+            }
+
+            // Check path for maximum distance
+            if (data.path && data.path.length > 0) {
+                const maxPathX = Math.max(...data.path.map(p => p.x || 0));
+                maxDistance = Math.max(maxDistance, maxPathX * 1.2);
+            }
+
+            // Check lead cars distance
+            if (data.leadOne && data.leadOne.distance > 0) {
+                maxDistance = Math.max(maxDistance, data.leadOne.distance * 1.1);
+            }
+            if (data.leadTwo && data.leadTwo.distance > 0) {
+                maxDistance = Math.max(maxDistance, data.leadTwo.distance * 1.1);
+            }
+
+            // Cap maximum view distance
+            maxDistance = Math.min(maxDistance, 80); // Don't exceed 80m
+
+            // Separate horizontal and vertical scaling
+            // Vertical scale adapts to view distance
+            const verticalPixelsPerMeter = canvasHeight * 0.92 / maxDistance;
+            // Horizontal scale stays constant for consistent element widths
+            const horizontalPixelsPerMeter = canvasHeight * 0.92 / 40; // Fixed at 40m baseline
+            const centerX = canvasWidth / 2;
+            const carY = canvasHeight * 0.98; // Car position at very bottom
+
+            // Draw distance marker lines (adaptive intervals)
+            const markerInterval = maxDistance > 60 ? 20 : 10;
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.font = '12px monospace';
+            ctx.fillStyle = 'rgba(150, 150, 150, 0.5)';
+            ctx.textAlign = 'left';
+            for (let dist = markerInterval; dist <= maxDistance; dist += markerInterval) {
+                const y = carY - (dist * verticalPixelsPerMeter);
+                if (y > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvasWidth, y);
+                    ctx.stroke();
+                    ctx.fillText(`${dist}m`, 5, y - 3);
+                }
+            }
+
+            // Draw detected lane lines (what openpilot actually sees)
+            if (data.detectedLanes && data.detectedLanes.length === 4) {
+                const laneColors = [
+                    'rgba(255, 50, 50, 0.8)',    // Far left lane - red
+                    'rgba(255, 255, 255, 0.95)', // Left boundary (YOUR LANE) - white
+                    'rgba(255, 255, 255, 0.95)', // Right boundary (YOUR LANE) - white
+                    'rgba(255, 50, 50, 0.8)'     // Far right lane - red
+                ];
+                const laneWidths = [4, 8, 8, 4]; // Much thicker lines
+
+                data.detectedLanes.forEach((lane, idx) => {
+                    if (lane && lane.length > 0) {
+                        ctx.strokeStyle = laneColors[idx];
+                        ctx.lineWidth = laneWidths[idx];
+                        ctx.setLineDash(idx === 1 || idx === 2 ? [] : [10, 10]);
+                        drawDetectedLane(lane, centerX, carY, horizontalPixelsPerMeter, verticalPixelsPerMeter);
+                    }
+                });
+                ctx.setLineDash([]);
+            }
+
+            // Draw planned path trajectory (green line)
+            if (data.path && data.path.length > 0) {
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 10; // Very thick green path
+                drawPath(data.path, centerX, carY, horizontalPixelsPerMeter, verticalPixelsPerMeter);
+            }
+
+            // Draw lead car if present (dynamically moves with distance changes)
+            if (data.leadOne && data.leadOne.distance > 0) {
+                const leadDist = data.leadOne.distance;
+                const leadRelVel = data.leadOne.relVel || 0;
+                const leadLateral = data.leadOne.lateral || 0;
+                const leadX = centerX + (leadLateral * horizontalPixelsPerMeter * 1.5); // Apply lateral offset
+                const leadY = carY - (leadDist * verticalPixelsPerMeter);
+
+                // If lead car is beyond visible range, show indicator at top
+                if (leadY <= canvasHeight * 0.2) {
+                    ctx.fillStyle = '#ffeb3b';
+                    ctx.font = 'bold 16px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`▲ ${leadDist.toFixed(0)}m`, centerX, 50);
+                } else if (leadY < carY) {
+                    // Draw lead car as rectangle
+                    const carWidth = 1.8 * horizontalPixelsPerMeter; // 1.8m car width
+                    const carLength = 4.5 * verticalPixelsPerMeter; // 4.5m car length
+
+                    // Color: red if FCW, orange if closing fast, yellow otherwise
+                    let leadColor = '#ffeb3b'; // yellow
+                    if (data.fcw) {
+                        leadColor = '#f44336'; // red - forward collision warning!
+                    } else if (leadRelVel < -2) {
+                        leadColor = '#ff9800'; // orange - closing quickly
+                    }
+
+                    ctx.fillStyle = leadColor;
+                    ctx.fillRect(leadX - carWidth/2, leadY - carLength, carWidth, carLength);
+
+                    // Draw car outline
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(leadX - carWidth/2, leadY - carLength, carWidth, carLength);
+
+                    // Draw distance and relative velocity with background for visibility
+                    ctx.font = 'bold 22px monospace';
+                    ctx.textAlign = 'center';
+
+                    // Draw background box for distance
+                    const distText = `${leadDist.toFixed(1)}m`;
+                    const distTextWidth = ctx.measureText(distText).width;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(leadX - distTextWidth/2 - 8, leadY - carLength - 32, distTextWidth + 16, 28);
+
+                    // Draw distance text in bright cyan
+                    ctx.fillStyle = '#00ffff';
+                    ctx.fillText(distText, leadX, leadY - carLength - 10);
+
+                    if (Math.abs(leadRelVel) > 0.5) {
+                        ctx.font = '18px monospace';
+                        const velText = `${leadRelVel > 0 ? '+' : ''}${leadRelVel.toFixed(1)} m/s`;
+                        const velTextWidth = ctx.measureText(velText).width;
+
+                        // Draw background box for velocity
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                        ctx.fillRect(leadX - velTextWidth/2 - 8, leadY - carLength - 56, velTextWidth + 16, 24);
+
+                        // Draw velocity text in bright cyan
+                        ctx.fillStyle = '#00ffff';
+                        ctx.fillText(velText, leadX, leadY - carLength - 35);
+                    }
+                }
+            }
+
+            // Draw second lead car if present
+            if (data.leadTwo && data.leadTwo.distance > 0) {
+                const leadDist = data.leadTwo.distance;
+                const leadRelVel = data.leadTwo.relVel || 0;
+                const leadLateral = data.leadTwo.lateral || 0;
+                const leadX = centerX + (leadLateral * horizontalPixelsPerMeter * 1.5);
+                const leadY = carY - (leadDist * verticalPixelsPerMeter);
+
+                if (leadY > canvasHeight * 0.2 && leadY < carY) {
+                    const carWidth = 1.8 * horizontalPixelsPerMeter;
+                    const carLength = 4.5 * verticalPixelsPerMeter;
+
+                    // leadTwo is dimmer/lighter color to distinguish
+                    ctx.fillStyle = '#9e9e9e'; // gray
+                    ctx.fillRect(leadX - carWidth/2, leadY - carLength, carWidth, carLength);
+
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(leadX - carWidth/2, leadY - carLength, carWidth, carLength);
+
+                    // Smaller text for leadTwo with background
+                    ctx.font = '18px monospace';
+                    ctx.textAlign = 'center';
+
+                    const lead2Text = `${leadDist.toFixed(1)}m`;
+                    const lead2TextWidth = ctx.measureText(lead2Text).width;
+
+                    // Draw background box
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(leadX - lead2TextWidth/2 - 6, leadY - carLength - 28, lead2TextWidth + 12, 24);
+
+                    // Draw text in bright magenta to distinguish from leadOne
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.fillText(lead2Text, leadX, leadY - carLength - 8);
+                }
+            }
+
+            // Draw ego car (your car at bottom) - bigger
+            const egoCarWidth = 2.0 * horizontalPixelsPerMeter;  // Slightly wider
+            const egoCarLength = 5.0 * verticalPixelsPerMeter; // Slightly longer
+            ctx.fillStyle = data.enabled ? '#4CAF50' : '#666';
+            ctx.fillRect(centerX - egoCarWidth/2, carY - egoCarLength, egoCarWidth, egoCarLength);
+
+            // Draw car outline
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(centerX - egoCarWidth/2, carY - egoCarLength, egoCarWidth, egoCarLength);
+
+            // Draw steering indicator
+            const steerAngle = data.steeringAngleDeg || 0;
+            ctx.strokeStyle = '#FFD700'; // Gold color
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(centerX, carY - egoCarLength/2);
+            const indicatorLength = 70;
+            const angleRad = (steerAngle * Math.PI) / 180;
+            const endX = centerX + Math.sin(angleRad) * indicatorLength;
+            const endY = carY - egoCarLength/2 - Math.cos(angleRad) * indicatorLength;
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Add arrow head
+            ctx.beginPath();
+            ctx.arc(endX, endY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+
+            // Update bukapilot thinking panel (outside canvas)
+            updateBukapilotThinking(data);
+        }
+
+        function updateBukapilotThinking(data) {
+            // Steering torque - bidirectional bar
+            const steerTorque = data.steeringTorque || 0;
+            const maxTorque = 4.0;
+            const torquePercent = Math.max(-1, Math.min(1, steerTorque / maxTorque));
+
+            const torqueBar = document.getElementById('steeringTorqueBar');
+            const torqueVal = document.getElementById('steeringTorqueVal');
+
+            if (torquePercent > 0) {
+                torqueBar.style.left = '50%';
+                torqueBar.style.width = (torquePercent * 50) + '%';
+            } else if (torquePercent < 0) {
+                torqueBar.style.left = (50 + torquePercent * 50) + '%';
+                torqueBar.style.width = (Math.abs(torquePercent) * 50) + '%';
+            } else {
+                torqueBar.style.left = '50%';
+                torqueBar.style.width = '0%';
+            }
+            torqueVal.textContent = steerTorque.toFixed(2) + ' Nm';
+
+            // Gas
+            const gasVal = data.gas || 0;
+            document.getElementById('gasBar').style.width = (gasVal * 100) + '%';
+            document.getElementById('gasVal').textContent = (gasVal * 100).toFixed(0) + '%';
+
+            // Brake
+            const brakeVal = data.brake || 0;
+            document.getElementById('brakeBar').style.width = (brakeVal * 100) + '%';
+            document.getElementById('brakeVal').textContent = (brakeVal * 100).toFixed(0) + '%';
+
+            // State
+            document.getElementById('longState2').textContent = data.state || '-';
+        }
+
+        function drawDetectedLane(lane, centerX, carY, horizontalScale, verticalScale) {
+            if (!lane || lane.length === 0) return;
+
+            ctx.beginPath();
+            let started = false;
+
+            // Apply lateral multiplier to widen lanes for better visibility
+            const lateralMultiplier = 1.5;
+
+            for (let i = 0; i < lane.length; i++) {
+                const point = lane[i];
+                const x = centerX + (point.y * horizontalScale * lateralMultiplier);
+                const y = carY - (point.x * verticalScale);
+
+                if (y < canvasHeight * 0.2) break;
+
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        function drawPath(path, centerX, carY, horizontalScale, verticalScale) {
+            if (!path || path.length === 0) return;
+
+            ctx.beginPath();
+            let started = false;
+
+            for (let i = 0; i < Math.min(path.length, 30); i++) {
+                const point = path[i];
+                const x = centerX + (point.y || 0) * horizontalScale;
+                const y = carY - (point.x || i * 2) * verticalScale;
+
+                if (y < 0) break;
+
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        function updateUI(data) {
+            // Connection status
+            document.getElementById('connStatus').classList.remove('disconnected');
+            document.getElementById('statusText').textContent = 'Connected';
+
+            // Speed
+            document.getElementById('speed').textContent = (data.vEgoCluster * 3.6).toFixed(1);
+            document.getElementById('cruise').textContent = (data.vCruiseCluster * 3.6).toFixed(1);
+
+            // System state
+            document.getElementById('state').textContent = data.state || '-';
+            document.getElementById('enabled').textContent = data.enabled ? '✅ Yes' : '❌ No';
+            document.getElementById('engageable').textContent = data.engageable ? '✅ Yes' : '❌ No';
+            document.getElementById('experimental').textContent = data.experimentalMode ? '✅ On' : '⚪ Off';
+
+            // Control
+            document.getElementById('active').textContent = data.active ? '✅ Yes' : '❌ No';
+            document.getElementById('longState').textContent = data.longControlState || '-';
+            document.getElementById('canErrors').textContent = data.canErrorCounter || '0';
+            document.getElementById('personality').textContent = personalities[data.personality] || '-';
+
+            // Car inputs
+            document.getElementById('steering').textContent = data.steeringAngleDeg.toFixed(1) + '°';
+            document.getElementById('steeringPressed').textContent = data.steeringPressed ? '✅' : '❌';
+            document.getElementById('gas').textContent = (data.gas * 100).toFixed(0) + '%';
+            document.getElementById('brake').textContent = (data.brake * 100).toFixed(0) + '%';
+            document.getElementById('gear').textContent = data.gearShifter || '-';
+
+            let blinkers = [];
+            if (data.leftBlinker) blinkers.push('⬅️ Left');
+            if (data.rightBlinker) blinkers.push('Right ➡️');
+            document.getElementById('blinkers').textContent = blinkers.length ? blinkers.join(' | ') : 'Off';
+
+            // Lead car
+            if (data.leadOne && data.leadOne.distance > 0) {
+                document.getElementById('leadDist').textContent = data.leadOne.distance.toFixed(1) + 'm';
+                document.getElementById('leadVel').textContent = (data.leadOne.relVel || 0).toFixed(1) + 'm/s';
+            } else {
+                document.getElementById('leadDist').textContent = 'No lead';
+                document.getElementById('leadVel').textContent = '-';
+            }
+            document.getElementById('fcw').textContent = data.fcw ? '⚠️ WARNING' : 'Off';
+
+            // Driver monitoring
+            document.getElementById('dmActive').textContent = data.dmActive ? '✅ Yes' : '❌ No';
+            document.getElementById('faceDetected').textContent = data.faceDetected ? '✅' : '❌';
+            document.getElementById('distracted').textContent = data.isDistracted ? '⚠️ Yes' : '✅ No';
+            document.getElementById('awareness').textContent = (data.awarenessStatus * 100).toFixed(0) + '%';
+
+            // System info
+            document.getElementById('dongleId').textContent = data.dongleId || '-';
+            document.getElementById('offroad').textContent = data.isOffroad ? '✅ Yes' : '❌ No';
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+            // Device Health
+            const cpuTemp = data.cpuTemp || 0;
+            let tempColor = cpuTemp > 80 ? '#f44336' : (cpuTemp > 70 ? '#ff9800' : '#4CAF50');
+            document.getElementById('cpuTemp').innerHTML = `<span style="color:${tempColor}">${cpuTemp.toFixed(1)}°C</span>`;
+            document.getElementById('memory').textContent = (data.memoryUsage || 0) + '%';
+            document.getElementById('battery').textContent = `${data.batteryPercent || 0}% (${data.batteryStatus || '-'})`;
+            document.getElementById('storage').textContent = (data.freeSpace || 0).toFixed(1) + '%';
+
+            // GPS
+            if (data.gpsSpeed !== undefined) {
+                document.getElementById('gpsSpeed').textContent = (data.gpsSpeed * 3.6).toFixed(1) + ' km/h';
+                document.getElementById('gpsAccuracy').textContent = data.gpsAccuracy.toFixed(1) + 'm';
+                document.getElementById('gpsAltitude').textContent = data.gpsAltitude.toFixed(1) + 'm';
+                document.getElementById('gpsBearing').textContent = data.gpsBearing.toFixed(1) + '°';
+            } else {
+                document.getElementById('gpsSpeed').textContent = 'No GPS';
+                document.getElementById('gpsAccuracy').textContent = '-';
+                document.getElementById('gpsAltitude').textContent = '-';
+                document.getElementById('gpsBearing').textContent = '-';
+            }
+
+            // Model Confidence
+            if (data.laneConfidenceL !== undefined) {
+                const confL = (data.laneConfidenceL * 100).toFixed(0);
+                const confR = (data.laneConfidenceR * 100).toFixed(0);
+                const colorL = data.laneConfidenceL > 0.7 ? '#4CAF50' : (data.laneConfidenceL > 0.4 ? '#ff9800' : '#f44336');
+                const colorR = data.laneConfidenceR > 0.7 ? '#4CAF50' : (data.laneConfidenceR > 0.4 ? '#ff9800' : '#f44336');
+                document.getElementById('laneL').innerHTML = `<span style="color:${colorL}">${confL}%</span>`;
+                document.getElementById('laneR').innerHTML = `<span style="color:${colorR}">${confR}%</span>`;
+            }
+            document.getElementById('modelTime').textContent = (data.modelExecutionTime * 1000).toFixed(1) + 'ms';
+
+            // Panda/CAN Health
+            if (data.pandaVoltage !== undefined) {
+                const voltage = data.pandaVoltage / 1000;
+                const voltColor = voltage < 11.5 ? '#f44336' : (voltage < 12.0 ? '#ff9800' : '#4CAF50');
+                document.getElementById('pandaVoltage').innerHTML = `<span style="color:${voltColor}">${voltage.toFixed(2)}V</span>`;
+                document.getElementById('pandaCurrent').textContent = data.pandaCurrent + 'mA';
+
+                const rxColor = data.canRxErrors > 10 ? '#f44336' : (data.canRxErrors > 0 ? '#ff9800' : '#4CAF50');
+                const txColor = data.canTxErrors > 10 ? '#f44336' : (data.canTxErrors > 0 ? '#ff9800' : '#4CAF50');
+                document.getElementById('canRxErrors').innerHTML = `<span style="color:${rxColor}">${data.canRxErrors}</span>`;
+                document.getElementById('canTxErrors').innerHTML = `<span style="color:${txColor}">${data.canTxErrors}</span>`;
+            }
+
+            // Lateral Control
+            document.getElementById('desiredAngle').textContent = (data.desiredSteeringAngle || 0).toFixed(1) + '°';
+            document.getElementById('actualAngle').textContent = (data.steeringAngleDeg || 0).toFixed(1) + '°';
+            document.getElementById('curvature').textContent = (data.desiredCurvature || 0).toFixed(4);
+
+            // Calibration
+            const calStatuses = ['Uncalibrated', 'Calibrated', 'Invalid'];
+            const calStatus = data.calStatus !== undefined ? calStatuses[data.calStatus] || 'Unknown' : '-';
+            const calColor = data.calStatus === 1 ? '#4CAF50' : '#f44336';
+            document.getElementById('calStatus').innerHTML = `<span style="color:${calColor}">${calStatus}</span>`;
+            document.getElementById('calRoll').textContent = (data.calRoll || 0).toFixed(3) + '°';
+            document.getElementById('calPitch').textContent = (data.calPitch || 0).toFixed(3) + '°';
+            document.getElementById('calYaw').textContent = (data.calYaw || 0).toFixed(3) + '°';
+
+            // Alerts
+            const alertBox = document.getElementById('alertBox');
+            if (data.alertText1) {
+                alertBox.textContent = `⚠️ ${data.alertText1}`;
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            // Draw lane visualization
+            drawLaneView(data);
+
+            lastUpdateTime = Date.now();
+        }
+
+        function checkConnection() {
+            if (Date.now() - lastUpdateTime > 3000) {
+                document.getElementById('connStatus').classList.add('disconnected');
+                document.getElementById('statusText').textContent = 'Connection lost';
+            }
+        }
+
+        async function fetchData() {
+            if (playbackMode) return; // Skip if in playback mode
+
+            try {
+                const response = await fetch('/api/data');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUI(data);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('connStatus').classList.add('disconnected');
+                document.getElementById('statusText').textContent = 'Connection error';
+            }
+        }
+
+        // Playback Functions
+        async function loadLogList() {
+            try {
+                const response = await fetch('/api/logs');
+                if (response.ok) {
+                    const logs = await response.json();
+                    const select = document.getElementById('logSelect');
+                    select.innerHTML = '<option value="">-- Select a log to replay --</option>';
+                    logs.forEach(log => {
+                        const date = new Date(log.modified * 1000);
+                        const size = (log.size / 1024).toFixed(1);
+                        select.innerHTML += `<option value="${log.filename}">${log.filename} (${size} KB, ${date.toLocaleString()})</option>`;
+                    });
+                }
+            } catch (error) {
+                alert('Failed to load log list: ' + error);
+            }
+        }
+
+        function selectLog() {
+            const select = document.getElementById('logSelect');
+            document.getElementById('loadLogBtn').disabled = !select.value;
+        }
+
+        async function loadLog() {
+            const select = document.getElementById('logSelect');
+            const filename = select.value;
+            if (!filename) return;
+
+            try {
+                document.getElementById('playbackInfo').textContent = '⏳ Loading...';
+                const response = await fetch(`/api/log/${filename}`);
+                if (response.ok) {
+                    const text = await response.text();
+                    const lines = text.trim().split('\n');
+                    playbackData = lines.map(line => JSON.parse(line));
+                    playbackIndex = 0;
+                    playbackMode = true;
+                    playbackPlaying = false;
+
+                    document.getElementById('modeIndicator').className = 'mode-badge mode-playback';
+                    document.getElementById('modeIndicator').textContent = '📼 PLAYBACK';
+                    document.getElementById('playbackButtons').style.display = 'block';
+                    document.getElementById('timeline').style.display = 'block';
+                    document.getElementById('timeline').max = playbackData.length - 1;
+                    document.getElementById('playbackInfo').textContent = `✅ Loaded ${playbackData.length} frames (${((playbackData[playbackData.length-1].timestamp - playbackData[0].timestamp) / 60).toFixed(1)} min)`;
+
+                    // Show first frame
+                    if (playbackData.length > 0) {
+                        updateUI(playbackData[0].data);
+                    }
+                } else {
+                    alert('Failed to load log file');
+                }
+            } catch (error) {
+                alert('Error loading log: ' + error);
+                console.error(error);
+            }
+        }
+
+        function playPause() {
+            playbackPlaying = !playbackPlaying;
+            const btn = document.getElementById('playPauseBtn');
+
+            if (playbackPlaying) {
+                btn.textContent = '⏸️ Pause';
+                playbackIntervalId = setInterval(advancePlayback, 100 / playbackSpeed);
+            } else {
+                btn.textContent = '▶️ Play';
+                if (playbackIntervalId) {
+                    clearInterval(playbackIntervalId);
+                    playbackIntervalId = null;
+                }
+            }
+        }
+
+        function advancePlayback() {
+            if (playbackIndex < playbackData.length - 1) {
+                playbackIndex++;
+                document.getElementById('timeline').value = playbackIndex;
+                updateUI(playbackData[playbackIndex].data);
+
+                const current = playbackData[playbackIndex].timestamp - playbackData[0].timestamp;
+                const total = playbackData[playbackData.length-1].timestamp - playbackData[0].timestamp;
+                document.getElementById('playbackInfo').textContent = `📼 ${(current/60).toFixed(1)} / ${(total/60).toFixed(1)} min`;
+            } else {
+                // Reached end
+                playbackPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️ Play';
+                if (playbackIntervalId) {
+                    clearInterval(playbackIntervalId);
+                    playbackIntervalId = null;
+                }
+            }
+        }
+
+        function seekTimeline() {
+            playbackIndex = parseInt(document.getElementById('timeline').value);
+            if (playbackData[playbackIndex]) {
+                updateUI(playbackData[playbackIndex].data);
+                const current = playbackData[playbackIndex].timestamp - playbackData[0].timestamp;
+                const total = playbackData[playbackData.length-1].timestamp - playbackData[0].timestamp;
+                document.getElementById('playbackInfo').textContent = `📼 ${(current/60).toFixed(1)} / ${(total/60).toFixed(1)} min`;
+            }
+        }
+
+        function changeSpeed(delta) {
+            const speeds = [0.25, 0.5, 1, 2, 4, 8];
+            let currentIdx = speeds.indexOf(playbackSpeed);
+            currentIdx = Math.max(0, Math.min(speeds.length - 1, currentIdx + delta));
+            playbackSpeed = speeds[currentIdx];
+            document.getElementById('speedDisplay').textContent = `Speed: ${playbackSpeed}x`;
+
+            // Restart interval if playing
+            if (playbackPlaying && playbackIntervalId) {
+                clearInterval(playbackIntervalId);
+                playbackIntervalId = setInterval(advancePlayback, 100 / playbackSpeed);
+            }
+        }
+
+        function stopPlayback() {
+            playbackMode = false;
+            playbackPlaying = false;
+            playbackData = [];
+            playbackIndex = 0;
+
+            if (playbackIntervalId) {
+                clearInterval(playbackIntervalId);
+                playbackIntervalId = null;
+            }
+
+            document.getElementById('modeIndicator').className = 'mode-badge mode-live';
+            document.getElementById('modeIndicator').textContent = '● LIVE';
+            document.getElementById('playbackButtons').style.display = 'none';
+            document.getElementById('timeline').style.display = 'none';
+            document.getElementById('playbackInfo').textContent = '';
+            document.getElementById('logSelect').value = '';
+            document.getElementById('loadLogBtn').disabled = true;
+
+            // Resume live updates
+            fetchData();
+        }
+
+        // Start fetching data
+        loadLogList(); // Load log list on startup
+        fetchData();
+        updateInterval = setInterval(fetchData, 200); // 5 Hz
+        setInterval(checkConnection, 1000);
+    </script>
+</body>
+</html>

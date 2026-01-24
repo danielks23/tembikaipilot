@@ -199,7 +199,8 @@ class Streamer:
                 cloudlog.warning(f"Skipping malformed line {line}")
                 continue
               if ssid in ssid_map: # Deduplicate keep strongest signal
-                if signal > ssid_map[ssid]["signal"]: ssid_map[ssid].update({"signal": signal, "security": security})
+                if signal > ssid_map[ssid]["signal"]:
+                  ssid_map[ssid].update({"signal": signal, "security": security})
               else:
                 ssid_map[ssid] = {"ssid": ssid, "signal": signal, "security": security}
           ssid_list = [
@@ -255,15 +256,30 @@ class Streamer:
     data["m"] = is_metric
     data['d'] = DONGLE_ID
     update_dict_from_sm(data, sm['controlsState'], ["enabled", "state", "experimentalMode", "vCruiseCluster",
-                                                    "alertText1", "alertText2", "alertStatus", "alertSize"])
+                                                    "alertText1", "alertText2", "alertStatus", "alertSize",
+                                                    "engageable", "active", "longControlState", "alertType",
+                                                    "alertSound", "canErrorCounter"])
     rd = sm['radarState'].to_dict()
     data["o"] = extract_lead(rd, "leadOne")
     data["t"] = extract_lead(rd, "leadTwo")
-    update_dict_from_sm(data, sm['driverMonitoringState'], ["isActiveMode"])
+    update_dict_from_sm(data, sm['driverMonitoringState'], ["isActiveMode", "faceDetected", "isDistracted",
+                                                             "awarenessStatus", "posePitchOffset", "distractedType"])
     data["h"] = sm['liveCalibration'].to_dict().get("height", [None])[0]
-    update_dict_from_sm(data, sm['carState'], ["vEgoCluster"])
-    update_dict_from_sm(data, sm['longitudinalPlan'], ["personality"])
+    update_dict_from_sm(data, sm['carState'], ["vEgoCluster", "brake", "gas", "steeringAngleDeg", "steeringTorque",
+                                                "gearShifter", "standstill", "cruiseState", "steeringPressed",
+                                                "gasPressed", "brakePressed", "leftBlinker", "rightBlinker"])
+    update_dict_from_sm(data, sm['longitudinalPlan'], ["personality", "hasLead", "fcw"])
     data = quantize(data)
+
+    # DEBUG: Log verbose status when there are errors/alerts
+    if data.get('alertText1') or data.get('canErrorCounter', 0) > 0:
+      msg = (
+        f"STATUS: state={data.get('state')} enabled={data.get('enabled')} "
+        f"engageable={data.get('engageable')} alert={data.get('alertText1')} "
+        f"canErrors={data.get('canErrorCounter')} longState={data.get('longControlState')}"
+      )
+      cloudlog.warning(msg)
+
     try:
       self.ble.chunk_and_send(CHANNEL_VISUALISATION, msgpack.packb(data))
     except Exception as e:
@@ -299,8 +315,26 @@ class Streamer:
     string_keys = {
       'LongitudinalPersonality', 'FeaturesPackage', 'FixFingerprint',
       'UpdaterTargetBranch', 'UpdaterState', 'UpdateFailedCount',
-      'LastUpdateTime', 'GithubUsername', 'GsmApn'
+      'LastUpdateTime', 'GithubUsername', 'GsmApn', 'CarParams', 'CarParamsPersistent'
     }
+
+    # Add verbose error/diagnostic info
+    try:
+      sm = self.sm
+      cs_dict = sm['controlsState'].to_dict()
+      sett['engageable'] = cs_dict.get('engageable', False)
+      sett['canErrorCounter'] = cs_dict.get('canErrorCounter', 0)
+      sett['longControlState'] = str(cs_dict.get('longControlState', 'unknown'))
+
+      car_dict = sm['carState'].to_dict()
+      sett['steeringFault'] = car_dict.get('steerFaultTemporary', False) or car_dict.get('steerFaultPermanent', False)
+      sett['cruiseState'] = str(car_dict.get('cruiseState', {}))
+
+      cal_dict = sm['liveCalibration'].to_dict()
+      sett['calibrationValid'] = cal_dict.get('calStatus') == 1 if 'calStatus' in cal_dict else None
+      sett['calibrationRPY'] = cal_dict.get('rpyCalib', [])
+    except Exception as e:
+      cloudlog.error(f"Error extracting verbose status: {e}")
 
     for key in bool_keys:
       sett[key] = safe_get(key, True)
