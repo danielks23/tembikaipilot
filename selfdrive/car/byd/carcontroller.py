@@ -183,6 +183,12 @@ class CarController(CarControllerBase):
         # 2. met with resistance while steering
         # 3. applied steer too far away from current steeringAngleDeg
         apply_angle = clip(apply_angle, CS.out.steeringAngleDeg - 10, CS.out.steeringAngleDeg + 10)
+
+        # Additional low-speed angle limit to prevent large steering at near-standstill
+        if CS.out.vEgo < 1.4:  # Below ~5 kph
+          max_angle_at_low_speed = 30  # Maximum 30° at very low speeds
+          apply_angle = clip(apply_angle, -max_angle_at_low_speed, max_angle_at_low_speed)
+
         self.last_apply_angle = apply_angle
       can_sends.append(create_can_steer_command(self.packer, apply_angle, lat_active, CS.out.standstill, CS.lkas_healthy, CS.lkas_rdy_btn or CS.out.brakePressed))
       can_sends.append(create_lkas_hud(self.packer, lat_active, CS.lss_state, CS.lss_alert, CS.tsr, \
@@ -191,10 +197,13 @@ class CarController(CarControllerBase):
       if self.CP.openpilotLongitudinalControl:
         long_active = CC.enabled and not CS.out.gasPressed
         brake_hold = CS.out.standstill and actuators.accel < 0
-        # is this needed?
-        #if (CC.enabled and CS.out.standstill and actuators.accel > 0):
-        #  can_sends.append(send_buttons(self.packer, 1, 0))
-        can_sends.append(create_accel_command(self.packer, actuators.accel, long_active, self.accel_mult, brake_hold))
+
+        # Prevent jerk at standstill: clamp accel to 0 when truly stopped
+        accel_cmd = actuators.accel
+        if CS.out.standstill and CS.out.vEgo < 0.1:  # Truly at standstill
+          accel_cmd = min(accel_cmd, 0)  # Only allow braking, no acceleration
+
+        can_sends.append(create_accel_command(self.packer, accel_cmd, long_active, self.accel_mult, brake_hold))
       else:
         if CS.out.standstill and CC.enabled and (self.frame % 100 == 0):
           can_sends.append(send_buttons(self.packer, 1, 0))
