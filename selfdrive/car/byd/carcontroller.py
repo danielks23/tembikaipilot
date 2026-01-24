@@ -1,6 +1,7 @@
 import math
 from cereal import car
 from opendbc.can.packer import CANPacker
+import cereal.messaging as messaging
 
 from openpilot.selfdrive.car import apply_std_steer_angle_limits, AngleRateLimit
 from openpilot.selfdrive.car.interfaces import CarControllerBase
@@ -37,6 +38,7 @@ class CarController(CarControllerBase):
     self.CP = CP
     self.frame = 0
     self.packer = CANPacker(DBC[CP.carFingerprint]['pt'])
+    self.sm = messaging.SubMaster(['radarState'])
 
     self.lka_active = False
     self.last_apply_angle = 0
@@ -45,6 +47,11 @@ class CarController(CarControllerBase):
     self.prev_press = False
     self.lka_latched = False
     self.steering_override_frames = 0  # Track sustained steering override
+    self.accel_request_frames = 0  # Track sustained acceleration requests at standstill
+
+    # Lead tracking for gap-aware resume
+    self.lead_distance = 0.0  # Current lead distance in meters
+    self.standstill_start_distance = 0.0  # Lead distance when we came to standstill
 
     # Adaptive tuning: oscillation detection
     self.angle_history = []  # Last N steering angles for oscillation detection
@@ -77,6 +84,9 @@ class CarController(CarControllerBase):
 
   def update(self, CC, CS, now_nanos):
     can_sends = []
+
+    # Update radar data for lead distance tracking
+    self.sm.update(0)
 
     enabled = CC.latActive
     actuators = CC.actuators
@@ -198,10 +208,49 @@ class CarController(CarControllerBase):
         long_active = CC.enabled and not CS.out.gasPressed
         brake_hold = CS.out.standstill and actuators.accel < 0
 
-        # Prevent jerk at standstill: clamp accel to 0 when truly stopped
+        # Track lead distance for gap-aware resume
+        lead_data = self.sm['radarState'].leadOne
+        if lead_data.status:
+          self.lead_distance = lead_data.dRel
+        else:
+          self.lead_distance = 0.0
+
         accel_cmd = actuators.accel
+
+        # Smart standstill resume logic with actual gap distance monitoring
         if CS.out.standstill and CS.out.vEgo < 0.1:  # Truly at standstill
-          accel_cmd = min(accel_cmd, 0)  # Only allow braking, no acceleration
+          # Record distance when first entering standstill
+          if self.accel_request_frames == 0 and accel_cmd <= 0:
+            self.standstill_start_distance = self.lead_distance if self.lead_distance > 0 else 0.0
+
+          if accel_cmd > 0.05:  # Positive acceleration requested (with small deadband)
+            self.accel_request_frames += 1
+
+            # Calculate gap growth: if lead moved >1.6m away from standstill start, resume immediately
+            gap_grew = False
+            if self.lead_distance > 0 and self.standstill_start_distance > 0:
+              gap_growth = self.lead_distance - self.standstill_start_distance
+              gap_grew = gap_growth > 1.6  # Lead moved away >1.6m
+            elif self.standstill_start_distance > 0 and self.lead_distance == 0:
+              # Lead was there but now gone (moved far away or changed lanes)
+              gap_grew = True
+
+            # Allow resume in these cases:
+            # 1. Strong acceleration (>= 0.3 m/s²) - normal traffic flow
+            # 2. Gap grew significantly (>1.6m) - need to close gap
+            # 3. Sustained weak request (15+ frames = 0.3s) - slow creep following
+            if accel_cmd >= 0.3 or gap_grew or self.accel_request_frames >= 15:
+              pass  # Allow acceleration through
+            else:
+              accel_cmd = 0  # Suppress until one of above conditions met
+          else:
+            # No positive accel requested - reset counter and allow braking
+            self.accel_request_frames = 0
+            accel_cmd = min(accel_cmd, 0)
+        else:
+          # Not at standstill - reset counter and distance tracking
+          self.accel_request_frames = 0
+          self.standstill_start_distance = 0.0
 
         can_sends.append(create_accel_command(self.packer, accel_cmd, long_active, self.accel_mult, brake_hold))
       else:
