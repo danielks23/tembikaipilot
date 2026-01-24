@@ -92,7 +92,7 @@ class DataCollector:
             if radar.leadOne.status:
                 data['leadOne'] = {
                     'distance': float(radar.leadOne.dRel),
-                    'velocity': float(radar.leadOne.vRel),
+                    'relVel': float(radar.leadOne.vRel),
                     'lateral': float(radar.leadOne.yRel),
                 }
 
@@ -107,8 +107,9 @@ class DataCollector:
 
             # Longitudinal
             plan = self.sm['longitudinalPlan']
+            personality_val = plan.personality.raw if hasattr(plan.personality, 'raw') else int(plan.personality)
             data.update({
-                'personality': int(plan.personality),
+                'personality': personality_val,
                 'hasLead': plan.hasLead,
                 'fcw': plan.fcw,
             })
@@ -182,8 +183,8 @@ class DataCollector:
                     'pandaVoltage': int(panda.voltage),
                     'pandaCurrent': int(panda.current),
                     'pandaSafetyMode': str(panda.safetyModel),
-                    'canRxErrors': int(panda.canRxErrs),
-                    'canTxErrors': int(panda.canTxErrs),
+                    'rxBufferOverflow': int(panda.rxBufferOverflow),
+                    'txBufferOverflow': int(panda.txBufferOverflow),
                 })
 
             # Lateral Planning (from controlsState)
@@ -224,7 +225,11 @@ class DataCollector:
 
                 # Flush every 5 seconds or 50 entries
                 if time.time() - self.last_flush > 5 or len(self.log_buffer) >= 50:
-                    self._flush_log()
+                    with open(self.current_log_file, 'a') as f:
+                        for entry in self.log_buffer:
+                            f.write(json.dumps(entry) + '\n')
+                    self.log_buffer.clear()
+                    self.last_flush = time.time()
 
             time.sleep(1.0 / UPDATE_HZ)
 
