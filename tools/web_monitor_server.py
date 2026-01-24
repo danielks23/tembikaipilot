@@ -23,7 +23,7 @@ class DataCollector:
         self.sm = messaging.SubMaster([
             'modelV2', 'controlsState', 'radarState', 'liveCalibration',
             'driverMonitoringState', 'carState', 'longitudinalPlan',
-            'deviceState', 'gpsLocationExternal', 'pandaStates', 'lateralPlan',
+            'deviceState', 'gpsLocationExternal', 'pandaStates',
             'carControl',
         ])
         self.params = Params()
@@ -186,11 +186,10 @@ class DataCollector:
                     'canTxErrors': int(panda.canTxErrs),
                 })
 
-            # Lateral Planning
-            lat = self.sm['lateralPlan']
+            # Lateral Planning (from controlsState)
+            cs = self.sm['controlsState']
             data.update({
-                'desiredCurvature': float(lat.curvatures[0]) if len(lat.curvatures) > 0 else 0,
-                'lateralAccel': float(lat.accels[0]) if len(lat.accels) > 0 else 0,
+                'desiredCurvature': float(cs.desiredCurvature) if hasattr(cs, 'desiredCurvature') else 0,
             })
 
             # Control Actuators
