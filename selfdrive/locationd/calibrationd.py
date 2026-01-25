@@ -34,7 +34,9 @@ INPUTS_WANTED = 50   # We want a little bit more than we need for stability
 MAX_ALLOWED_YAW_SPREAD = np.radians(2)
 MAX_ALLOWED_PITCH_SPREAD = np.radians(4)
 RPY_INIT = np.array([0.0,0.0,0.0])
-WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.0])
+# KA2: Device width 12.5cm, cameras 8cm apart (4cm each side of center)
+# Wide-angle camera is 4cm left of device center, requires yaw compensation
+WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.04])  # ~2.3° yaw offset for 4cm lateral offset
 HEIGHT_INIT = np.array([1.22])
 
 # These values are needed to accommodate the model frame in the narrow cam of the C3
