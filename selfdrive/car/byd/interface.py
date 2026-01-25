@@ -12,58 +12,144 @@ class CarInterface(CarInterfaceBase):
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "byd"
 
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.byd)]
-    ret.safetyConfigs[0].safetyParam = 1
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.byd)] # BYD safety model
+    ret.safetyConfigs[0].safetyParam = 1    # Default safety param, can be overridden per model
 
-    ret.steerControlType = car.CarParams.SteerControlType.angle
-    ret.steerLimitTimer = 0.2              # time before steerLimitAlert is issued
-    ret.steerActuatorDelay = 0.01          # Steering wheel actuator delay in seconds
+    ret.steerControlType = car.CarParams.SteerControlType.angle # angle-based steering control
+    ret.steerLimitTimer = 0.2               # time before steerLimitAlert is issued
+    ret.steerActuatorDelay = 0.01           # Steering wheel actuator delay in seconds
 
     ret.lateralTuning.init('pid')
 
     ret.centerToFront = ret.wheelbase * 0.44
     ret.tireStiffnessFactor = 0.9871
 
-    ret.openpilotLongitudinalControl = True
-    # TODO: angle based vehicle needs pid tuning?
-    ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0.], [530]]
-    ret.lateralTuning.pid.kpBP = [0., 5., 20.]
-    ret.lateralTuning.pid.kiBP = [0., 5., 20.]
-    ret.longitudinalTuning.kpBP = [0., 5., 20.]
-    ret.longitudinalTuning.kiBP = [0., 5., 20.]
-    ret.longitudinalTuning.kpV = [0.8, 0.7, 0.6]
-    ret.longitudinalTuning.kiV = [0.5, 0.4, 0.3]
-
-    ret.lateralTuning.pid.kf = 0.00015
-    ret.longitudinalActuatorDelayLowerBound = 0.2
-    ret.longitudinalActuatorDelayUpperBound = 0.3
-
-    ret.wheelSpeedFactor = 0.695
+    # Car-specific parameters
     if candidate == CAR.ATTO3:
-      ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
-    elif candidate == CAR.M6:
-      ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
+      # ========== BYD ATTO3 Configuration ==========
+      # Full openpilot control (steering + gas/brake)
+      ret.openpilotLongitudinalControl = True
 
+      # Wheel speed calibration factor (converts CAN wheel speed to actual speed)
+      # Lower values = openpilot thinks car is going slower than actual
+      # Adjust based on GPS speed vs speedometer comparison
+      ret.wheelSpeedFactor = 0.695
+
+      # --- Lateral Control (Steering) ---
+      # Maximum steering torque limit
+      ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0.], [530]]
+
+      # PID gains for steering control (angle-based steering)
+      # kpBP/kiBP: Speed breakpoints [0 m/s, 5 m/s, 20 m/s] = [0, 18, 72 km/h]
+      ret.lateralTuning.pid.kpBP = [0., 5., 20.]
+      ret.lateralTuning.pid.kiBP = [0., 5., 20.]
+      # kpV: Proportional gains - immediate steering response at each speed
+      # Higher = more aggressive steering, lower = gentler steering
+      ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
+      # kiV: Integral gains - corrects persistent steering errors
+      # Higher = faster correction, lower = smoother but slower correction
+      ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
+      # kf: Feedforward gain - predictive steering component
+      ret.lateralTuning.pid.kf = 0.00015
+
+      # --- Longitudinal Control (Speed/Acceleration) ---
+      # Speed breakpoints for acceleration control [0, 18, 72 km/h]
+      ret.longitudinalTuning.kpBP = [0., 5., 20.]
+      ret.longitudinalTuning.kiBP = [0., 5., 20.]
+      # kpV: Proportional gains - immediate throttle/brake response
+      # Lower values = smoother acceleration/braking (less jerky)
+      # [0.5, 0.4, 0.3] optimized for comfortable smooth driving
+      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]
+      # kiV: Integral gains - corrects sustained speed errors
+      # Lower values = gentler correction, allows more coasting
+      # [0.2, 0.15, 0.1] prevents aggressive braking when lead slows
+      ret.longitudinalTuning.kiV = [0.2, 0.15, 0.1]
+      # Actuator delay: time between command and actual throttle/brake response
+      ret.longitudinalActuatorDelayLowerBound = 0.2  # Best case (light throttle)
+      ret.longitudinalActuatorDelayUpperBound = 0.3  # Worst case (heavy brake)
+
+      # --- Starting/Stopping Behavior ---
+      ret.startingState = True  # Enable special resume-from-stop logic
+      # startAccel: Initial acceleration when resuming from stop (m/s²)
+      # 1.8 m/s² = gentle smooth launch, matches smooth PID tuning above
+      # Lower = smoother but slower, higher = quicker but jerkier
+      ret.startAccel = 1.8
+      # stoppingDecelRate: Final deceleration when approaching complete stop (m/s²)
+      # 0.25 m/s² = gentle comfortable stop with no head-bob
+      # Lower = smoother but longer, higher = quicker but firmer
+      ret.stoppingDecelRate = 0.25
+      # minEnableSpeed: Minimum speed to engage openpilot (-1 = no minimum, can engage at 0 km/h)
+      ret.minEnableSpeed = -1
+      # enableBsm: Use car's blind spot monitoring for lane change assists
+      ret.enableBsm = True
+
+    elif candidate == CAR.M6:
+      # ========== BYD M6 Configuration ==========
+      # Full openpilot control with more aggressive tuning for larger vehicle
+      ret.openpilotLongitudinalControl = True
+      ret.wheelSpeedFactor = 0.695
+      # M6 uses different safety configuration
+      ret.safetyConfigs[0].safetyParam = 3
+
+      # --- Lateral Control (Steering) ---
+      ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0.], [530]]
+      ret.lateralTuning.pid.kpBP = [0., 5., 20.]
+      ret.lateralTuning.pid.kiBP = [0., 5., 20.]
+      ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
+      ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
+      ret.lateralTuning.pid.kf = 0.00015
+
+      # --- Longitudinal Control (Speed/Acceleration) ---
+      # More aggressive tuning for M6 (larger, heavier vehicle)
+      ret.longitudinalTuning.kpBP = [0., 5., 20.]
+      ret.longitudinalTuning.kiBP = [0., 5., 20.]
+      # Higher gains [1.2, 1.0, 0.8] = more responsive speed control
+      # More immediate throttle/brake response for better performance feel
       ret.longitudinalTuning.kpV = [1.2, 1.0, 0.8]
+      ret.longitudinalTuning.kiV = [0.5, 0.4, 0.3]
+      # Deadzone: ignore small speed errors to prevent jerkiness in traffic
+      # Below 9 m/s (32 km/h), ignore errors up to 0.15 m/s (0.5 km/h)
       ret.longitudinalTuning.deadzoneBP = [0., 9.]
       ret.longitudinalTuning.deadzoneV = [0., 0.15]
+      ret.longitudinalActuatorDelayLowerBound = 0.2
+      ret.longitudinalActuatorDelayUpperBound = 0.3
 
-      ret.safetyConfigs[0].safetyParam = 3
+      # --- Starting/Stopping Behavior ---
+      ret.startingState = True
+      # Higher startAccel (3 m/s²) for more responsive resume
+      # Matches aggressive longitudinal tuning above
+      ret.startAccel = 3.0
+      # Firmer stops (0.3 m/s²) for more confident braking feel
+      ret.stoppingDecelRate = 0.3
+      ret.minEnableSpeed = -1
+      ret.enableBsm = True
+
     elif candidate in (CAR.SEAL, CAR.SEALION7):
-      ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
-
+      # ========== BYD SEAL/SEALION7 Configuration ==========
+      # Lane Keep Assist only - uses stock ACC for speed control
+      ret.openpilotLongitudinalControl = False  # Stock ACC handles gas/brake
+      ret.radarUnavailable = True  # No radar data available to openpilot
+      ret.wheelSpeedFactor = 0.695
       ret.safetyConfigs[0].safetyParam = 2
-      ret.openpilotLongitudinalControl = False
-      ret.radarUnavailable = True
+
+      # --- Lateral Control (Steering Only) ---
+      ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0.], [530]]
+      ret.lateralTuning.pid.kpBP = [0., 5., 20.]
+      ret.lateralTuning.pid.kiBP = [0., 5., 20.]
+      ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
+      ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
+      ret.lateralTuning.pid.kf = 0.00015
+
+      # No longitudinal tuning parameters (stock ACC controls speed)
+      # openpilot only provides steering assistance for lane centering
+      ret.minEnableSpeed = -1
+      ret.enableBsm = True
+
     else:
+      # ========== Unknown BYD Model ==========
+      # Dashcam mode only - no active control
       ret.dashcamOnly = True
       ret.safetyModel = car.CarParams.SafetyModel.noOutput
-
-    ret.startingState = True
-    ret.startAccel = 3.0
-    ret.minEnableSpeed = -1
-    ret.enableBsm = True
-    ret.stoppingDecelRate = 0.2 # reach stopping target smoothly
 
     return ret
 

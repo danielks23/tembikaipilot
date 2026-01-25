@@ -13,7 +13,7 @@ RADAR_FREQ_HZ = 20
 # Higher requirements for stability reduce false track switches
 CONF_ON = 0.75         # Reasonable confidence threshold
 CONF_OFF = 0.50
-VALID_CNT_ON = 5       # Require 5 frames to be stable (increased from 3 to prevent track churn)
+VALID_CNT_ON = 3       # Require 3 frames to be stable (balanced: faster reaction, still stable)
 # Keep tracks alive for much longer to prevent Kalman filter resets
 # When tracks briefly fail filtering, keep them published to maintain continuity
 MISS_MAX = 15          # Delete tracks after 15 missed frames (increased from 4 for much better persistence)
@@ -60,7 +60,7 @@ class RadarInterface(RadarInterfaceBase):
     # Key: track_id, Value: (dRel, yRel, vRel, miss_frames)
     self.track_history: dict[int, tuple[float, float, float, int]] = {}
     self.MAX_HISTORY_FRAMES = 10  # Keep history for up to 10 frames after track disappears
-    
+
     # Track quality: velocity consistency score for confidence calculation
     self.track_consistency: dict[int, float] = {}  # track_id -> consistency score (0.0-1.0)
 
@@ -275,7 +275,7 @@ class RadarInterface(RadarInterfaceBase):
         pt.vRel = vRel
         pt.aRel = aRel
         pt.yvRel = float("nan")
-        
+
         # Calculate and log confidence score (for future use when RadarData supports it)
         # Confidence based on: persistence (how long track has been valid) and velocity consistency
         if self.valid_cnt[slot] > 0:
