@@ -31,9 +31,9 @@ class CarInterface(CarInterfaceBase):
       ret.openpilotLongitudinalControl = True
 
       # Wheel speed calibration factor (converts CAN wheel speed to actual speed)
-      # Lower values = openpilot thinks car is going slower than actual
-      # Adjust based on GPS speed vs speedometer comparison
-      ret.wheelSpeedFactor = 0.695
+      # Higher values = openpilot thinks car is going faster, will accelerate more
+      # Calibrated to match speedometer: ACC 80 km/h = Speedometer 80 km/h
+      ret.wheelSpeedFactor = 0.732
 
       # --- Lateral Control (Steering) ---
       # Maximum steering torque limit
@@ -57,13 +57,12 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpBP = [0., 5., 20.]
       ret.longitudinalTuning.kiBP = [0., 5., 20.]
       # kpV: Proportional gains - immediate throttle/brake response
-      # Lower values = smoother acceleration/braking (less jerky)
-      # [0.5, 0.4, 0.3] optimized for comfortable smooth driving
-      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]
+      # [0.7, 0.6, 0.4] provides responsive acceleration without excessive jerk
+      ret.longitudinalTuning.kpV = [0.7, 0.6, 0.4]
       # kiV: Integral gains - corrects sustained speed errors
-      # Lower values = gentler correction, allows more coasting
-      # [0.2, 0.15, 0.1] prevents aggressive braking when lead slows
-      ret.longitudinalTuning.kiV = [0.2, 0.15, 0.1]
+      # Slightly higher to smooth response and prevent jerking
+      # [0.25, 0.2, 0.12] prevents aggressive corrections while staying responsive
+      ret.longitudinalTuning.kiV = [0.25, 0.2, 0.12]
       # Actuator delay: time between command and actual throttle/brake response
       ret.longitudinalActuatorDelayLowerBound = 0.2  # Best case (light throttle)
       ret.longitudinalActuatorDelayUpperBound = 0.3  # Worst case (heavy brake)
@@ -71,7 +70,7 @@ class CarInterface(CarInterfaceBase):
       # --- Starting/Stopping Behavior ---
       ret.startingState = True  # Enable special resume-from-stop logic
       # startAccel: Initial acceleration when resuming from stop (m/s²)
-      # 1.8 m/s² = gentle smooth launch, matches smooth PID tuning above
+      # 1.8 m/s² = responsive launch that matches increased kpV tuning
       # Lower = smoother but slower, higher = quicker but jerkier
       ret.startAccel = 1.8
       # stoppingDecelRate: Final deceleration when approaching complete stop (m/s²)
