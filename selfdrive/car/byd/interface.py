@@ -31,9 +31,10 @@ class CarInterface(CarInterfaceBase):
       ret.openpilotLongitudinalControl = True
 
       # Wheel speed calibration factor (converts CAN wheel speed to actual speed)
-      # Higher values = openpilot thinks car is going faster, will accelerate more
+      # Higher values = openpilot thinks car is going faster, will show lower speedometer reading
+      # Lower values = openpilot thinks car is going slower, will show higher speedometer reading
       # Calibrated to match speedometer: ACC 80 km/h = Speedometer 80 km/h
-      ret.wheelSpeedFactor = 0.732
+      ret.wheelSpeedFactor = 0.660
 
       # --- Lateral Control (Steering) ---
       # Maximum steering torque limit
