@@ -68,6 +68,52 @@ def _preempt_previous():
                 _dbg(f"kill() error: {e!r}")
     _current_proc = None
 
+def set_upload_indicator(
+    status: str,
+    *,
+    brightness: str = "100",
+    ws_script: str = WS2812_SCRIPT_DEFAULT,
+    fire_and_forget: bool = True,
+):
+    """Set cluster B (LEDs 3-5) to show upload status independently.
+    
+    Args:
+        status: 'idle' (off), 'uploading' (blue blink), 'success' (green solid), 'failed' (red blink)
+    """
+    status_map = {
+        "idle": (None, "solid", None),           # off
+        "uploading": ("BLUE", "blink", "fast"),   # uploading
+        "success": ("GREEN", "solid", None),      # success
+        "failed": ("RED", "blink", "fast"),       # failed
+    }
+    
+    if status not in status_map:
+        return
+    
+    color, mode, rate = status_map[status]
+    
+    if color is None:
+        # Turn off - set to black
+        set_led("000000", None, mode="solid", brightness=brightness, 
+                ws_script=ws_script, fire_and_forget=fire_and_forget)
+    else:
+        # Set only cluster B (pass same color for A to keep it unchanged, ws2812 handles it)
+        py = sys.executable or "python3"
+        args = [py, ws_script, mode, "--brightness", brightness, "--a-color", "000000", "--b-color", parse_color(color)]
+        
+        if mode in ("blink", "run"):
+            if rate:
+                args += ["--rate", rate]
+            args += ["--duration", "600"]
+        
+        _dbg("exec upload: " + " ".join(shlex.quote(x) for x in args))
+        
+        if fire_and_forget:
+            subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(args, check=False)
+
+
 def set_led(
     a_color: str,
     b_color: Optional[str] = None,

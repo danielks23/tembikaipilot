@@ -50,12 +50,15 @@ class AlertLEDService:
         self.debug = debug
 
         self._stop = threading.Event()
-        self._sm = messaging.SubMaster([self.topic_cs, self.topic_dc])
+        self._sm = messaging.SubMaster([self.topic_cs, self.topic_dc, 'uploaderState'])
+        self._params = messaging.SubMaster([], poll='deviceState')
 
         self._last_key: Optional[Tuple[str, str, Optional[str]]] = None
         self._last_state: Optional[StateTuple] = None
         self._last_msg_time_cs: Optional[float] = None
         self._last_integ: int = (self.integ_min + self.integ_max) // 2
+        self._is_onroad: bool = False
+        self._is_uploading: bool = False
 
         # boot → not-running yellow (counts as a state)
         state = ("YELLOW", "solid", None, self.not_running_brightness)
@@ -67,10 +70,19 @@ class AlertLEDService:
         self._stop.set()
 
     def run_forever(self):
+        from openpilot.common.params import Params
+        params = Params()
+
         while not self._stop.is_set():
             now = time.monotonic()
             self._sm.update(self.base_poll_ms)
             now = time.monotonic()
+
+            # Check if car is onroad
+            self._is_onroad = params.get_bool("IsOnroad")
+
+            # Check upload status when car is off
+            self._check_upload_status()
 
             if self._sm.updated[self.topic_dc]:
                 dc = self._sm[self.topic_dc]
@@ -148,10 +160,19 @@ class AlertLEDService:
         color, mode, rate, brightness = state
         # For blink: set a long duration; preemption stops it on next state change
         kwargs = {"duration": "600"} if mode in ("blink", "run") else {}
-        set_led(color, None, mode=mode, rate=rate, brightness=brightness,
+
+        # If uploading while car is off: cluster A shows alert, cluster B shows upload
+        # Otherwise: both clusters show same alert
+        if not self._is_onroad and self._is_uploading:
+            b_color = None  # Don't control B, upload status controls it
+        else:
+            b_color = color  # Both clusters show same alert
+
+        set_led(color, b_color, mode=mode, rate=rate, brightness=brightness,
                 ws_script=self.ws_script, fire_and_forget=True, **kwargs)
         if self.debug:
-            print(f"[AlertLED]{' [FORCE]' if force else ''} -> {mode} {color} "
+            cluster_info = "A+B" if b_color is not None else "A only"
+            print(f"[AlertLED]{' [FORCE]' if force else ''} [{cluster_info}] -> {mode} {color} "
                   f"{('rate='+rate) if rate else ''} b={brightness}", flush=False)
 
     def _safe_on_change(self, active: bool, alert_type: str, state: StateTuple):
@@ -159,6 +180,40 @@ class AlertLEDService:
             self.on_change and self.on_change(active, alert_type, state)
         except Exception:
             pass
+
+    def _check_upload_status(self):
+        """Check uploaderState to see if upload is in progress"""
+        try:
+            if 'uploaderState' not in self._sm.msgs:
+                return
+
+            if self._sm.updated['uploaderState']:
+                us = self._sm['uploaderState']
+                # Check if there are files in upload queue
+                total_queue = getattr(us, 'immediateQueueSize', 0) + getattr(us, 'rawQueueSize', 0)
+                
+                # Uploading = queue > 0 AND car is off
+                was_uploading = self._is_uploading
+                self._is_uploading = (total_queue > 0) and (not self._is_onroad)
+
+                # When upload status changes, show upload status on cluster B
+                if self._is_uploading and not was_uploading:
+                    # Upload started - cluster B shows BLUE blink
+                    color, mode, rate = ("BLUE", "blink", "fast")
+                    brightness = str(self._map_integ_to_brightness_inverse(self._last_integ))
+                    set_led(None, color, mode=mode, rate=rate, brightness=brightness,
+                           ws_script=self.ws_script, fire_and_forget=True, duration="600")
+                    if self.debug:
+                        print("[AlertLED] Upload started - cluster B BLUE blink", flush=False)
+
+                elif not self._is_uploading and was_uploading:
+                    # Upload done - give B back to alert control (will be updated next alert change)
+                    if self.debug:
+                        print("[AlertLED] Upload done - cluster B back to alert control", flush=False)
+
+        except Exception as e:
+            if self.debug:
+                print(f"[AlertLED] Error checking upload: {e}", flush=False)
 
 def main():
     svc = AlertLEDService()
