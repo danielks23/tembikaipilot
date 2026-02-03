@@ -1,1 +1,1 @@
-#define COMMA_VERSION "10.0.3-release"
+#define COMMA_VERSION "tembikaipilot-v1.0.0"
