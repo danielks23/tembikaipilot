@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2007 The Android Open Source Project
  *
  * Redistribution and use in source and binary forms, with or without
