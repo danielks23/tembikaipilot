@@ -1,4 +1,4 @@
-﻿/* rsa.c
+/* rsa.c
 **
 ** Copyright 2012, The Android Open Source Project
 **

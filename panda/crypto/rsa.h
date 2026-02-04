@@ -1,4 +1,4 @@
-﻿/* rsa.h
+/* rsa.h
 **
 ** Copyright 2008, The Android Open Source Project
 **

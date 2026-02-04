@@ -1,4 +1,4 @@
-﻿/* sha.c
+/* sha.c
 **
 ** Copyright 2013, The Android Open Source Project
 **
