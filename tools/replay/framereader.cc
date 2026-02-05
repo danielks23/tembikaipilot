@@ -3,7 +3,9 @@
 
 #include <cassert>
 #include <algorithm>
+#ifndef __aarch64__
 #include "third_party/libyuv/include/libyuv.h"
+#endif
 
 #ifdef __APPLE__
 #define HW_DEVICE_TYPE AV_HWDEVICE_TYPE_VIDEOTOOLBOX
@@ -240,12 +242,17 @@ bool FrameReader::copyBuffers(AVFrame *f, VisionBuf *buf) {
       memcpy(buf->uv + i*buf->stride, f->data[1] + i*f->linesize[1], width);
     }
   } else {
+#ifndef __aarch64__
     libyuv::I420ToNV12(f->data[0], f->linesize[0],
                        f->data[1], f->linesize[1],
                        f->data[2], f->linesize[2],
                        buf->y, buf->stride,
                        buf->uv, buf->stride,
                        width, height);
+#else
+    LOGE("I420ToNV12 not available on aarch64");
+    return false;
+#endif
   }
   return true;
 }
