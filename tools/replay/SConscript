@@ -15,6 +15,9 @@ replay_lib_src = ["replay.cc", "consoleui.cc", "camera.cc", "filereader.cc", "lo
 replay_lib = qt_env.Library("qt_replay", replay_lib_src, LIBS=base_libs, FRAMEWORKS=base_frameworks)
 Export('replay_lib')
 replay_libs = [replay_lib, 'avutil', 'avcodec', 'avformat', 'bz2', 'curl', 'ncurses'] + base_libs
+# Add yuv for architectures that have it (x86_64, Darwin, but not larch64)
+if arch != "larch64":
+  replay_libs.append('yuv')
 
 if GetOption('extras'):
   qt_env.Program("replay", ["main.cc"], LIBS=replay_libs, FRAMEWORKS=base_frameworks)
