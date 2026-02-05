@@ -182,21 +182,42 @@ class Ka2(HardwareBase):
     except Exception as e:
       print(f"ModemManager error: {e}", flush=True)
       return None
-    
+
     if not objects:
       print("ModemManager: No objects found", flush=True)
       return None
-    
+
     # Filter for modem objects (paths containing "/Modem/")
     modem_paths = [path for path in objects.keys() if "/Modem/" in path]
-    
+
     if not modem_paths:
       print(f"ModemManager: No modem objects. Available: {list(objects.keys())}", flush=True)
       return None
-    
+
     modem_path = modem_paths[0]
-    print(f"ModemManager: Found modem at {modem_path}", flush=True)
-    return self.bus.get_object(MM, modem_path)
+    modem = self.bus.get_object(MM, modem_path)
+
+    # Print modem information
+    try:
+      manufacturer = modem.Get(MM_MODEM, 'Manufacturer', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+      model = modem.Get(MM_MODEM, 'Model', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+      revision = modem.Get(MM_MODEM, 'Revision', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+      state = modem.Get(MM_MODEM, 'State', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+      state_name = MM_MODEM_STATE(state).name if state in MM_MODEM_STATE._value2member_map_ else str(state)
+      signal_quality = modem.Get(MM_MODEM, 'SignalQuality', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+
+      # Get failure reason if available
+      try:
+        failed_reason = modem.Get(MM_MODEM, 'StateFailedReason', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
+        reason_str = f" ({failed_reason})" if failed_reason else ""
+      except Exception:
+        reason_str = ""
+
+      print(f"ModemManager: {manufacturer} {model} (fw: {revision}) - State: {state_name}{reason_str}, Signal: {signal_quality[0]}%", flush=True)
+    except Exception:
+      print(f"ModemManager: Found modem at {modem_path}", flush=True)
+
+    return modem
 
   def get_wlan(self):
     wlan_path = self.nm.GetDeviceByIpIface('wlan0', dbus_interface=NM, timeout=TIMEOUT)
@@ -216,7 +237,7 @@ class Ka2(HardwareBase):
         'sim_state': ["ABSENT"],
         'data_connected': False
       }
-    
+
     sim_path = modem.Get(MM_MODEM, 'Sim', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
 
     if sim_path == "/":
