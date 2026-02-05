@@ -61,8 +61,8 @@ NetworkStrength = log.DeviceState.NetworkStrength
 MM_MODEM_ACCESS_TECHNOLOGY_UMTS = 1 << 5
 MM_MODEM_ACCESS_TECHNOLOGY_LTE = 1 << 14
 
-
-def sudo_write(val, path):
+TIMEOUT = 0.1
+MODEM_TIMEOUT = 1.0  # Longer timeout for modem operations during boot
   try:
     with open(path, 'w') as f:
       f.write(str(val))
@@ -159,6 +159,8 @@ class Ka2(HardwareBase):
 
     try:
       modem = self.get_modem()
+      if modem is None:
+        return NetworkType.none
       access_t = modem.Get(MM_MODEM, 'AccessTechnologies', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
       if access_t >= MM_MODEM_ACCESS_TECHNOLOGY_LTE:
         return NetworkType.cell4G
@@ -172,8 +174,25 @@ class Ka2(HardwareBase):
     return NetworkType.none
 
   def get_modem(self):
-    objects = self.mm.GetManagedObjects(dbus_interface="org.freedesktop.DBus.ObjectManager", timeout=TIMEOUT)
-    modem_path = list(objects.keys())[0]
+    try:
+      objects = self.mm.GetManagedObjects(dbus_interface="org.freedesktop.DBus.ObjectManager", timeout=MODEM_TIMEOUT)
+    except Exception as e:
+      print(f"ModemManager error: {e}", flush=True)
+      return None
+    
+    if not objects:
+      print("ModemManager: No objects found", flush=True)
+      return None
+    
+    # Filter for modem objects (paths containing "/Modem/")
+    modem_paths = [path for path in objects.keys() if "/Modem/" in path]
+    
+    if not modem_paths:
+      print(f"ModemManager: No modem objects. Available: {list(objects.keys())}", flush=True)
+      return None
+    
+    modem_path = modem_paths[0]
+    print(f"ModemManager: Found modem at {modem_path}", flush=True)
     return self.bus.get_object(MM, modem_path)
 
   def get_wlan(self):
@@ -186,6 +205,15 @@ class Ka2(HardwareBase):
 
   def get_sim_info(self):
     modem = self.get_modem()
+    if modem is None:
+      return {
+        'sim_id': '',
+        'mcc_mnc': None,
+        'network_type': ["Unknown"],
+        'sim_state': ["ABSENT"],
+        'data_connected': False
+      }
+    
     sim_path = modem.Get(MM_MODEM, 'Sim', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
 
     if sim_path == "/":
