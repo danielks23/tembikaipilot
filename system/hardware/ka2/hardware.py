@@ -63,6 +63,9 @@ MM_MODEM_ACCESS_TECHNOLOGY_LTE = 1 << 14
 
 TIMEOUT = 0.1
 MODEM_TIMEOUT = 1.0  # Longer timeout for modem operations during boot
+
+
+def sudo_write(val, path):
   try:
     with open(path, 'w') as f:
       f.write(str(val))
