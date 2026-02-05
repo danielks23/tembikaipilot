@@ -250,7 +250,7 @@ bool FrameReader::copyBuffers(AVFrame *f, VisionBuf *buf) {
                        buf->uv, buf->stride,
                        width, height);
 #else
-    LOGE("I420ToNV12 not available on aarch64");
+    rWarning("I420ToNV12 conversion not available on aarch64");
     return false;
 #endif
   }
