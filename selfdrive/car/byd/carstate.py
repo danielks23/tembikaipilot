@@ -145,10 +145,10 @@ class CarState(CarStateBase):
       self.is_cruise_latch = False
 
     # SEAL/SEALION7/M6 use stock CRUISE_STATE signal directly
-    # Values: 3=active, 6=active with lead, 7=active (alternative state)
+    # Values: 3=active, 5=active, 6=active with lead, 7=active (alternative state)
     if self.CP.carFingerprint in (CAR.SEAL, CAR.SEALION7, CAR.M6):
       cruise_state = parser_alt.vl["ACC_HUD_ADAS"]["CRUISE_STATE"]
-      ret.cruiseState.enabled = cruise_state in (3, 6, 7)
+      ret.cruiseState.enabled = cruise_state in (3, 5, 6, 7)
     else:
       ret.cruiseState.enabled = self.is_cruise_latch
 

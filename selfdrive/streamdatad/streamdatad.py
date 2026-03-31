@@ -14,9 +14,10 @@ from openpilot.common.swaglog import cloudlog
 from openpilot.system.version import get_version, get_commit, terms_version, training_version
 from openpilot.common.params import Params
 from openpilot.system.hardware import HARDWARE
-from openpilot.selfdrive.car.fingerprints import all_known_cars
+from openpilot.selfdrive.car.car_helpers import supported_cars
 from openpilot.common.features import Features
 from openpilot.selfdrive.streamdatad.ble_helper import BLEBridge, ChunkReceiver
+from system.hardware.ka2.hardware import Ka2
 
 # BLE Constants
 MESSAGE_HZ = 16 # Expected message rate, must match app visualisation value
@@ -36,11 +37,22 @@ WIFI_SCAN_SIGNAL_THRESHOLD = 31 # Minimum signal strength required for Wi-Fi sca
 # Device Constants
 UPDATE_PROCESS = "selfdrive.updated"
 HOTSPOT_SERVICE = "wlan1-setup.service"
-SUPPORTED_MODELS = {getattr(car, 'value', car) for car in all_known_cars()}
 SM_UPDATE_INTERVAL = 33 # in ms, the interval where capnp submaster updates
 features = Features()
+KA2 = Ka2()
+NetworkType = log.DeviceState.NetworkType
+NETWORK_TYPES = {
+  NetworkType.none: "Offline",
+  NetworkType.wifi: "Wi-Fi",
+  NetworkType.cell2G: "2G",
+  NetworkType.cell3G: "3G",
+  NetworkType.cell4G: "4G",
+  NetworkType.cell5G: "5G",
+  NetworkType.ethernet: "Ethernet",
+}
 
 # Call functions with cached values only once
+SUPPORTED_CARS = supported_cars()
 GIT_COMMIT = get_commit()[:7]
 CUR_VERSION = get_version()
 OS_VERSION = HARDWARE.get_os_version()
@@ -154,9 +166,6 @@ def quantize(o):
     return None if math.isnan(o) else round(o, 3)
   return o
 
-def is_supported_model(name: str) -> bool:
-  return name.upper() in SUPPORTED_MODELS
-
 class Streamer:
   """Handles visualisation and settings BLE streams."""
   def __init__(self, sm=None):
@@ -164,6 +173,7 @@ class Streamer:
     self.sm = sm if sm else messaging.SubMaster([
       'modelV2', 'controlsState', 'radarState', 'liveCalibration',
       'driverMonitoringState', 'carState', 'longitudinalPlan',
+      'uploaderState'
     ])
     self.rk = Ratekeeper(MESSAGE_HZ) # Ratekeeper for loop
     self.last_periodic_time = 0 # Track last periodic task
@@ -175,6 +185,7 @@ class Streamer:
     threading.Thread(target=self.ble.start, daemon=True).start() # Start BLE peripheral
     self.receiver = ChunkReceiver(self.ble) # Handle incoming messages in separate thread
     self.send_channel = None # Keep track of which channel to send messages
+    self.send_car_names_cnt = -1
     self.hotspot_enabled = False
     self.hotspot_ip = None
 
@@ -282,6 +293,12 @@ class Streamer:
       f"Connecting to\n{attempt_ssid}" if (attempt_ssid := self.wifi_connect_attempt_ssid) else self.active_wlan_ssid
     sett['hotspotEnabled'] = self.hotspot_enabled
     sett['hotspotIp'] = self.hotspot_ip
+    sett['networkType'] = NETWORK_TYPES[KA2.get_network_type()]
+    sett['remainingDataUpload'] = f"{int(self.sm['uploaderState'].immediateQueueSize)} MB"
+
+    if 0 <= self.send_car_names_cnt < 3:
+      sett['carNames'] = SUPPORTED_CARS
+      self.send_car_names_cnt += 1
 
     if hasattr(self, "supportTunnelOutput"):
       sett["supportTunnelOutput"] = self.supportTunnelOutput
@@ -297,7 +314,7 @@ class Streamer:
       'UpdaterFetchAvailable'
     }
     string_keys = {
-      'LongitudinalPersonality', 'FeaturesPackage', 'FixFingerprint',
+      'LongitudinalPersonality', 'FeaturesPackage', 'CarName',
       'UpdaterTargetBranch', 'UpdaterState', 'UpdateFailedCount',
       'LastUpdateTime', 'GithubUsername', 'GsmApn'
     }
@@ -337,14 +354,12 @@ class Streamer:
         case 'saveToggle':
           safe_put_all(settings, True)
         case 'saveConfig':
-          # Keep 'is not None' check for fingerprint and features to ensure empty strings are allowed (for unset)
-          if (fix_fp := settings.pop('FixFingerprint', None)) is not None:
-            if (fix_fp := fix_fp.strip()) == "" or is_supported_model(fix_fp):
-              safe_put_all({'FixFingerprint': fix_fp})
+          if (car_name := settings.pop('CarName', None)) is not None:
+            safe_put_all({'CarName': car_name})
           if (features_to_set := settings.pop('FeaturesPackage', None)) is not None:
             features.set_features(features_to_set)
           if (apn := settings.pop('GsmApn', None)) is not None:
-            params.remove("GsmApn") if apn == "" else params.put_nonblocking("GsmApn", apn)
+            params.put_nonblocking("GsmApn", apn)
           # Put string setting if not one of the above keys, ensure above keys are popped so they will not be set below
           safe_put_all(settings)
         case 'resetCalibration':
@@ -407,6 +422,7 @@ class Streamer:
       return None
     if m.get('msgType') == 'curPage':
       self.send_channel = c
+      self.send_car_names_cnt = 0
       return None
     return c, m # Other message types, pass to next function
 

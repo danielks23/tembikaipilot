@@ -48,7 +48,6 @@ class CarController(CarControllerBase):
     self.params = CarControllerParams(self.CP)
 
     self.last_steer = 0
-    self.resume = False
     self.steering_direction = False
     f = Features()
     self.always_lks_tactile = f.has("lks-tactile")
@@ -56,6 +55,14 @@ class CarController(CarControllerBase):
 
     self.prev_steer_enabled = False
     self.last_steer_disable = 0
+
+    self.sng_next_press_frame = 0 # The frame where the next resume press is allowed
+    self.resume_counter = 0       # Counter for tracking the progress of a resume press
+    self.is_sng_check = False
+    self.resume = False
+
+    self.cancel_press_cnt = 0
+    self.last_cancel_press = 0
 
   def update(self, CC, CS, now_nanos):
     can_sends = []
@@ -69,7 +76,7 @@ class CarController(CarControllerBase):
     new_steer = round(actuators.steer * self.params.STEER_MAX)
     apply_steer = apply_proton_steer_torque_limits(new_steer, self.last_steer, 0, self.params)
 
-    if not (steer_enabled := CC.latActive and not CS.out.lkaDisabled) and self.prev_steer_enabled:
+    if not (steer_enabled := CC.latActive) and self.prev_steer_enabled:
       self.last_steer_disable = monotonic()
     self.prev_steer_enabled = steer_enabled
 
@@ -92,17 +99,39 @@ class CarController(CarControllerBase):
         lks_audio, lks_tactile = CS.lks_audio, CS.lks_tactile
 
       # standstill logic
-      standstill_request = CS.out.standstill and CC.longActive and actuators.accel < -0.01
-      self.resume = True if (CS.out.standstill and actuators.accel > 0) else False
+      standstill_request = CS.out.standstill and CC.longActive
 
-      # proton X90 steer values are even numbers if we don't want to edit the proton dbc
-      steer_cmd = (round(apply_steer) * 2) if (self.CP.carFingerprint == CAR.X90 and CC.latActive) else apply_steer
+      # SNG
+      if not (CS.cruise_standstill and CC.longActive):
+        self.is_sng_check = False
+        self.resume = False
+      else:
+        self.resume = CS.out.gasPressed or CS.res_btn_pressed
+        if not self.is_sng_check:
+          self.is_sng_check = True
+          self.sng_next_press_frame = self.frame + 310
+          self.resume_counter = 0
+
+        elif self.resume or self.resume_counter >= 2:
+          self.sng_next_press_frame = max(self.sng_next_press_frame, self.frame + 110)
+          self.resume_counter = 0
+
+        elif actuators.accel > 0 and self.frame > self.sng_next_press_frame:
+          # to disengage from stock cruise standstill
+          self.resume = True
+          can_sends.append(send_buttons(self.packer, 0))
+          self.resume_counter += 1
+
+      is_x90 = self.CP.carFingerprint == CAR.X90
+
+      # TODO: Remove line below and test on X90 since stock LKA last bit is always 0 for any Proton car.
+      steer_cmd = (round(apply_steer) * 2) if (is_x90 and CC.latActive) else apply_steer
 
       can_sends.append(create_can_steer_command(self.packer, steer_cmd, lat_active,
                        CS.hand_on_wheel_warning and CS.is_icc_on,
                        CS.hand_on_wheel_warning_2 and CS.is_icc_on,
                        CS.lks_aux, lks_audio, lks_tactile, CS.lks_assist_mode,
-                       CS.lka_enable, ldw_steering, steer_enabled))
+                       CS.lka_enable, ldw_steering, steer_enabled, is_x90))
 
       if self.openpilot_long:
         accel_cmd = accel_cmd * 15 if accel_cmd >= 0 else accel_cmd * 18
@@ -116,15 +145,18 @@ class CarController(CarControllerBase):
           accel_cmd = min(CS.stock_acc_cmd * mult, accel_cmd)
 
         can_sends.append(create_acc_cmd(self.packer, accel_cmd, CC.longActive, CS.out.gasPressed,
-                                        standstill_request, self.resume))
-
-      # to disengage from stock cruise standstill
-      if (CC.enabled and CS.cruise_standstill and (self.frame % 20 == 0)):
-        can_sends.append(send_buttons(self.packer, False))
+                                        standstill_request, self.resume, CS.out.brakePressed))
 
     # cancel stock cruise if error at openpilot
-    if pcm_cancel_cmd and not CS.out.brakePressed:
+    if not pcm_cancel_cmd:
+      self.cancel_press_cnt = 0
+      self.last_cancel_press = 0
+    elif self.frame > self.last_cancel_press + 15 and not (CS.out.brakePressed and not CS.cruise_standstill):
       can_sends.append(send_buttons(self.packer, 1))
+      self.cancel_press_cnt += 1
+      if self.cancel_press_cnt == 2:
+        self.cancel_press_cnt = 0
+        self.last_cancel_press = self.frame
 
     self.last_steer = apply_steer
     new_actuators = actuators.copy()

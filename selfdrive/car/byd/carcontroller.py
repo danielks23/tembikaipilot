@@ -6,7 +6,7 @@ import cereal.messaging as messaging
 from openpilot.selfdrive.car import apply_std_steer_angle_limits, AngleRateLimit
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from openpilot.selfdrive.car.byd.bydcan import create_can_steer_command, send_buttons, create_lkas_hud, create_accel_command, create_steering_torque_spoof_camera
-from openpilot.selfdrive.car.byd.values import DBC, CAR, ACCEL_MULT
+from openpilot.selfdrive.car.byd.values import DBC, CAR, ACCEL_MULT, CANBUS
 from openpilot.common.numpy_fast import clip
 
 GearShifter = car.CarState.GearShifter
@@ -82,6 +82,8 @@ class CarController(CarControllerBase):
       )
     })()
 
+    self.button_send_bus = CANBUS.cam_bus if (CP.carFingerprint in (CAR.ATTO3, CAR.M6)) else CANBUS.main_bus
+
   def update(self, CC, CS, now_nanos):
     can_sends = []
 
@@ -145,7 +147,7 @@ class CarController(CarControllerBase):
         self.lka_active = False
         self.lka_cooldown = 0
 
-    lat_active = (self.lka_cooldown > 10) and enabled and self.lka_active and not CS.out.standstill
+    lat_active = (self.lka_cooldown > 30) and enabled and self.lka_active and not CS.out.standstill
 
     if (self.frame % 2) == 0:
       if lat_active:
@@ -254,8 +256,22 @@ class CarController(CarControllerBase):
 
         can_sends.append(create_accel_command(self.packer, accel_cmd, long_active, self.accel_mult, brake_hold))
       else:
-        if CS.out.standstill and CC.enabled and (self.frame % 100 == 0):
-          can_sends.append(send_buttons(self.packer, 1, 0))
+        if CS.out.genericToggle or (CS.out.standstill and CC.enabled and (self.frame % 100 == 0)):
+          can_sends.append(send_buttons(self.packer, 1, 0, self.button_send_bus))
+
+    # Spoof steering torque to simulate hands on wheel
+    if self.CP.carFingerprint in (CAR.M6, CAR.SEAL):
+      # Time-based spoof: trigger every 3 seconds, sustain for 1 second
+      # At 50 Hz: 1 second = 50 frames, 3 seconds = 150 frames
+      SPOOF_DURATION_FRAMES = 50   # 1 second at 50 Hz
+      SPOOF_CYCLE_FRAMES = 150     # 3 seconds at 50 Hz
+
+      # Calculate position in 3-second cycle (0-149)
+      cycle_position = self.frame % SPOOF_CYCLE_FRAMES
+      spoof_active = cycle_position < SPOOF_DURATION_FRAMES
+
+      if (self.frame % 5) == 0:
+        can_sends.append(create_steering_torque_spoof_camera(self.packer, lat_active, CS.out.steeringTorque, spoof_active))
 
     # Spoof steering torque to simulate hands on wheel
     if self.CP.carFingerprint in (CAR.M6):
@@ -275,7 +291,7 @@ class CarController(CarControllerBase):
         can_sends.append(create_steering_torque_spoof_camera(self.packer, lat_active, CS.out.steeringTorque, spoof_active, steering_angle_rate))
 
     if pcm_cancel_cmd:
-      can_sends.append(send_buttons(self.packer, 0, 1))
+      can_sends.append(send_buttons(self.packer, 0, 1, self.button_send_bus))
 
     new_actuators = actuators.copy()
     new_actuators.steeringAngleDeg = apply_angle

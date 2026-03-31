@@ -82,7 +82,7 @@ def create_lkas_hud(packer, lat_active, lss_state, lss_alert, tsr, ahb, passthro
 
   return packer.make_can_msg("LKAS_HUD_ADAS", 0, values)
 
-def send_buttons(packer, state, cancel):
+def send_buttons(packer, state, cancel, bus):
   values = {
       "SET_BTN": state,
       "RES_BTN": state,
@@ -91,7 +91,7 @@ def send_buttons(packer, state, cancel):
       "ACC_ON_BTN": cancel,
       "LKAS_ON_BTN": 0,
   }
-  return packer.make_can_msg("PCM_BUTTONS", 2, values)
+  return packer.make_can_msg("PCM_BUTTONS", bus, values)
 
 import random
 
@@ -101,12 +101,9 @@ _torque_spoof_state = {
   'target_torque': 0.0,          # Target torque when spoof is active
   'ramp_rate': 3.0,              # Nm per call ramp rate (realistic steering nudge at ~10 Hz)
   'max_torque': 10.0,            # Maximum torque offset (realistic hand touch, Nm)
-  'next_cycle_length': 150,      # Variable cycle length for randomization
-  'next_duration': 50,           # Variable spoof duration
-  'frame_counter': 0,            # Track frames for variable timing
 }
 
-def create_steering_torque_spoof_camera(packer, lat_active, main_torque, spoof, steering_angle_rate=0):
+def create_steering_torque_spoof_camera(packer, lat_active, main_torque, spoof):
   """
   Spoof steering torque on camera bus (2) to simulate hands on wheel
   Sends STEERING_TORQUE message
@@ -114,39 +111,17 @@ def create_steering_torque_spoof_camera(packer, lat_active, main_torque, spoof, 
 
   When spoof is True, simulates realistic hand touch by gradually ramping up torque
   like a natural steering nudge, rather than random jumps.
-  Uses randomized timing and correlates with actual steering activity.
   """
 
   if spoof:
-    # Update pattern and timing when cycle completes
-    if _torque_spoof_state['frame_counter'] >= _torque_spoof_state['next_cycle_length']:
-      _torque_spoof_state['frame_counter'] = 0
-      _torque_spoof_state['next_cycle_length'] = random.randint(120, 180)  # 1.2-1.8s at 100Hz
-      _torque_spoof_state['next_duration'] = random.randint(40, 60)  # 0.4-0.6s
-      _torque_spoof_state['pattern'] = random.randint(0, 2)  # Choose pattern
-
-    _torque_spoof_state['frame_counter'] += 1
-
-    # Correlate torque with actual steering angle changes for realism
-    steering_activity_factor = 1.0 + min(abs(steering_angle_rate) * 0.1, 0.5)
-
-    # Generate pattern-based torque offset
-    phase = _torque_spoof_state['frame_counter'] / _torque_spoof_state['next_duration']
-    if _torque_spoof_state['frame_counter'] < _torque_spoof_state['next_duration']:
-      pattern = _torque_spoof_state.get('pattern', 0)
-      if pattern == 1:  # Sine wave
-        base_torque = _torque_spoof_state['max_torque'] * math.sin(phase * math.pi)
-      elif pattern == 2:  # Triangle wave
-        base_torque = _torque_spoof_state['max_torque'] * (1.0 - abs(2.0 * phase - 1.0)) if phase < 1.0 else 0.0
-      else:  # Square wave (original)
-        base_torque = _torque_spoof_state['max_torque']
-
-      _torque_spoof_state['target_torque'] = base_torque * steering_activity_factor
+    # Realistic hand touch simulation: gradually ramp up torque like a steering nudge
+    # Set target torque (with slight variation for realism)
+    if abs(_torque_spoof_state['target_torque']) < 0.1:
+      # Start new nudge - choose target torque (slightly randomized for natural feel)
+      _torque_spoof_state['target_torque'] = random.uniform(5.0, _torque_spoof_state['max_torque'])
       # Occasionally apply negative torque for bidirectional realism
-      if random.random() < 0.15:
+      if random.random() < 0.3:
         _torque_spoof_state['target_torque'] = -_torque_spoof_state['target_torque']
-    else:
-      _torque_spoof_state['target_torque'] = 0.0
 
     # Ramp towards target torque (realistic steering nudge behavior)
     target = _torque_spoof_state['target_torque']

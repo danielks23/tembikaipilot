@@ -13,7 +13,7 @@ RADAR_FREQ_HZ = 20
 # Higher requirements for stability reduce false track switches
 CONF_ON = 0.75         # Reasonable confidence threshold
 CONF_OFF = 0.50
-VALID_CNT_ON = 3       # Require 3 frames to be stable (balanced: faster reaction, still stable)
+VALID_CNT_ON = 5       # Require 5 frames to be stable (increased from 3 to prevent track churn)
 # Keep tracks alive for much longer to prevent Kalman filter resets
 # When tracks briefly fail filtering, keep them published to maintain continuity
 MISS_MAX = 15          # Delete tracks after 15 missed frames (increased from 4 for much better persistence)
@@ -196,7 +196,6 @@ class RadarInterface(RadarInterfaceBase):
       vRel = vlead - v_ego
       aRel = alead - a_ego
 
-      # Speed-adaptive lateral filtering
       yrel_max = self._get_yrel_max(dRel, v_ego)
 
       plausible = (
@@ -260,13 +259,6 @@ class RadarInterface(RadarInterfaceBase):
           # Track exists - remove from history if it was there
           track_id = self.pts[slot].trackId
           self.track_history.pop(track_id, None)
-          # Track velocity consistency for confidence scoring
-          prev_vRel = self.pts[slot].vRel
-          vRel_delta = abs(vRel - prev_vRel)
-          # Store consistency score in a separate dict (RadarPoint doesn't have this field)
-          if not hasattr(self, 'track_consistency'):
-            self.track_consistency = {}
-          self.track_consistency[track_id] = max(0, self.track_consistency.get(track_id, 1.0) - vRel_delta * 0.1)
 
         pt = self.pts[slot]
         pt.measured = True
@@ -275,14 +267,6 @@ class RadarInterface(RadarInterfaceBase):
         pt.vRel = vRel
         pt.aRel = aRel
         pt.yvRel = float("nan")
-
-        # Calculate and log confidence score (for future use when RadarData supports it)
-        # Confidence based on: persistence (how long track has been valid) and velocity consistency
-        if self.valid_cnt[slot] > 0:
-          persistence_score = min(1.0, self.valid_cnt[slot] / 10.0)  # Max at 10 frames
-          velocity_score = self.track_consistency.get(pt.trackId, 1.0)
-          confidence = persistence_score * 0.6 + velocity_score * 0.4  # Weight persistence more
-          # TODO: Export confidence when RadarData schema supports it
 
       elif keep_alive:
         # Track exists but filtering failed temporarily - keep it alive

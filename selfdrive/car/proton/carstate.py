@@ -4,7 +4,7 @@ from opendbc.can.can_define import CANDefine
 from openpilot.common.numpy_fast import mean
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car.interfaces import CarStateBase
-from openpilot.selfdrive.car.proton.values import DBC, HUD_MULTIPLIER, CANBUS
+from openpilot.selfdrive.car.proton.values import DBC, HUD_MULTIPLIER, CANBUS, CAR
 from openpilot.selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
 from openpilot.common.params import Params
 from openpilot.common.features import Features
@@ -23,6 +23,7 @@ class CarState(CarStateBase):
     can_define = CANDefine(DBC[CP.carFingerprint]['pt'])
     self.shifter_values = can_define.dv["TRANSMISSION"]['GEAR']
     self.set_distance_values = can_define.dv['PCM_BUTTONS']['SET_DISTANCE']
+    self.CP = CP
 
     # lks settings
     self.lks_audio = False
@@ -44,6 +45,7 @@ class CarState(CarStateBase):
     self.hand_on_wheel_warning_2 = False
 
     self.prev_angle = 0
+    self.res_btn_pressed = False
 
     self.stock_acc_cmd = 0
     self.cruise_latch = False
@@ -78,7 +80,8 @@ class CarState(CarStateBase):
     self.has_audio_ldw = bool(cp_cam.vl["LKAS"]["LANE_DEPARTURE_AUDIO_RIGHT"]) or \
                          bool(cp_cam.vl["LKAS"]["LANE_DEPARTURE_AUDIO_LEFT"])
 
-    ret.lkaDisabled = False
+    # If cruise mode is ICC, make bukapilot control steering so it won't disengage.
+    ret.lkaDisabled = not (self.lka_enable or self.is_icc_on)
 
     # stock ldw ldp settings update
     self.stock_ldw_steering = bool(cp_cam.vl["ADAS_LKAS"]["LDW_STEERING"])
@@ -114,7 +117,12 @@ class CarState(CarStateBase):
                      cp.vl["DOOR_RIGHT_SIDE"]['FRONT_RIGHT_DOOR']])
 
     ret.seatbeltUnlatched = cp.vl["SEATBELTS"]['RIGHT_SIDE_SEATBELT_ACTIVE_LOW'] == 1
-    ret.gearShifter = 2 #hardcode to drive because stock proton has non standard gear
+
+    if self.CP.carFingerprint == CAR.X90:
+      ret.gearShifter = 2 # hardcode to drive because stock X90 has non standard gear
+    else:
+      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
+
     ret.brakeHoldActive = bool(cp.vl["PARKING_BRAKE"]["CAR_ON_HOLD"])
 
     # gas pedal
@@ -139,7 +147,10 @@ class CarState(CarStateBase):
     ret.stockAeb = False
     ret.stockFcw = bool(cp_cam.vl["FCW"]["STOCK_FCW_TRIGGERED"])
 
+    #TODO: If using car signal, S70 cannot engage, X50 gas press would make it False.
     ret.cruiseState.available = True
+
+    self.res_btn_pressed = bool(cp.vl["ACC_BUTTONS"]["RES_BUTTON"])
     distance_val = int(cp_cam.vl["PCM_BUTTONS"]['SET_DISTANCE'])
     self.set_long_personality(distance_val - 1)
 
