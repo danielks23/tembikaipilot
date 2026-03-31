@@ -16,7 +16,7 @@ class CarInterface(CarInterfaceBase):
     ret.safetyConfigs[0].safetyParam = 1    # Default safety param, can be overridden per model
 
     ret.steerControlType = car.CarParams.SteerControlType.angle # angle-based steering control
-    ret.steerLimitTimer = 0.6               # time before steerLimitAlert is issued
+    ret.steerLimitTimer = 1.2               # time before steerLimitAlert is issued (1.2s avoids false alarms on sharp curves)
     ret.steerActuatorDelay = 0.01           # Steering wheel actuator delay in seconds
 
     ret.lateralTuning.init('pid')
@@ -47,8 +47,8 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpV = [0.7, 0.6, 0.4]
       ret.longitudinalTuning.kiV = [0.25, 0.2, 0.12]
       ret.startingState = True
-      ret.startAccel = 1.8
-      ret.stoppingDecelRate = 0.25
+      ret.startAccel = 2.0
+      ret.stoppingDecelRate = 0.8  # ramp braking at 0.8 m/s²/s (openpilot default; 0.25 was 3× too slow)
       ret.minEnableSpeed = -1
       ret.enableBsm = True
 

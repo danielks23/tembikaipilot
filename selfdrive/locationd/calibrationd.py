@@ -34,11 +34,12 @@ INPUTS_WANTED = 50   # We want a little bit more than we need for stability
 MAX_ALLOWED_YAW_SPREAD = np.radians(2)
 MAX_ALLOWED_PITCH_SPREAD = np.radians(4)
 
-# KA2: Device width 12.5cm, cameras 8cm apart (4cm each side of center)
-# Telephoto camera is 4cm RIGHT of center → needs LEFT rotation compensation
-RPY_INIT = np.array([0.0, 0.0, -0.04])  # ~-2.3° yaw offset for telephoto (right camera)
-# Wide-angle camera is 4cm LEFT of center → needs RIGHT rotation compensation
-WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.04])  # ~+2.3° yaw offset for wide (left camera)
+RPY_INIT = np.array([0.0, 0.0, 0.0])
+# KA2 dual-camera lateral offset: wide camera is 4cm LEFT of device center.
+# This seeds the wideFromDeviceEuler averaging buffer in calibrationd.
+# Note: the actual image-warp correction for both cameras is applied in modeld.py
+# (KA2_CAM_OFFSET_YAW), which is persistent and cannot be overwritten by calibration.
+WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.04])  # wide cam 4cm left → +yaw seed
 
 HEIGHT_INIT = np.array([1.22])
 

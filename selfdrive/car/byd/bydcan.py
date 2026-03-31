@@ -25,7 +25,7 @@ def create_can_steer_command(packer, steer_angle, steer_req, is_standstill, ecu_
   return packer.make_can_msg("STEERING_MODULE_ADAS", 0, values)
 
 def create_accel_command(packer, accel, enabled, accel_mult, brake_hold):
-  accel = max(min(accel * accel_mult, 30), -50)
+  accel = max(min(accel * accel_mult, 30), -88)  # -88 allows full -3.5 m/s² at accel_mult=25 (25*3.5=87.5)
   accel_factor = 12 if accel >= 2 else 5 if accel < 0 else 11
   enabled &= not brake_hold
 

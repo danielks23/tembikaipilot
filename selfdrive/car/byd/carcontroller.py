@@ -11,7 +11,8 @@ from openpilot.common.numpy_fast import clip
 
 GearShifter = car.CarState.GearShifter
 
-STEER_LOWPASS_HZ = 2
+STEER_LOWPASS_HZ = 3  # Reduced filter delay for better curve tracking
+MIN_STEER_SPEED = 0.8  # m/s (~3 kph) — don't steer at near-standstill
 
 def lowpass_1pole(x, y_prev):
     """
@@ -60,7 +61,7 @@ class CarController(CarControllerBase):
 
     # Per-model steering rate limits (degrees/sec) for fine-tuned control
     self.rate_limits = {
-      CAR.ATTO3: {'up_low': 5, 'down_low': 7, 'up_mid': 3.5, 'down_mid': 7, 'up_high': 1.5, 'down_high': 4.5},  # Increased for adequate steering response
+      CAR.ATTO3: {'up_low': 3, 'down_low': 7, 'up_mid': 2.5, 'down_mid': 7, 'up_high': 2.5, 'down_high': 4.5},  # Reduced to prevent ping-pong; up_high increased for curve tracking
       CAR.SEAL: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
       CAR.SEALION7: {'up_low': 6, 'down_low': 8, 'up_mid': 3, 'down_mid': 7, 'up_high': 1, 'down_high': 4},
       CAR.M6: {'up_low': 5, 'down_low': 7, 'up_mid': 2.5, 'down_mid': 6, 'up_high': 0.8, 'down_high': 3.5},  # More conservative
@@ -147,7 +148,7 @@ class CarController(CarControllerBase):
         self.lka_active = False
         self.lka_cooldown = 0
 
-    lat_active = (self.lka_cooldown > 30) and enabled and self.lka_active and not CS.out.standstill
+    lat_active = (self.lka_cooldown > 30) and enabled and self.lka_active and CS.out.vEgo > MIN_STEER_SPEED and not CS.out.gasPressed
 
     if (self.frame % 2) == 0:
       if lat_active:
@@ -210,41 +211,52 @@ class CarController(CarControllerBase):
         long_active = CC.enabled and not CS.out.gasPressed
         brake_hold = CS.out.standstill and actuators.accel < 0
 
-        # Track lead distance for gap-aware resume
+        # Track lead data for gap-aware resume
         lead_data = self.sm['radarState'].leadOne
-        if lead_data.status:
+        lead_active = lead_data.status
+        if lead_active:
           self.lead_distance = lead_data.dRel
+          lead_vrel = lead_data.vRel  # positive = lead moving away from ego
         else:
           self.lead_distance = 0.0
+          lead_vrel = 0.0
 
         accel_cmd = actuators.accel
 
-        # Smart standstill resume logic with actual gap distance monitoring
+        # Smart standstill resume logic
         if CS.out.standstill and CS.out.vEgo < 0.1:  # Truly at standstill
           # Record distance when first entering standstill
           if self.accel_request_frames == 0 and accel_cmd <= 0:
-            self.standstill_start_distance = self.lead_distance if self.lead_distance > 0 else 0.0
+            self.standstill_start_distance = self.lead_distance if lead_active else 0.0
 
           if accel_cmd > 0.05:  # Positive acceleration requested (with small deadband)
             self.accel_request_frames += 1
 
-            # Calculate gap growth: if lead moved >1.6m away from standstill start, resume immediately
+            # Primary trigger: vRel — use relative velocity, much more noise-immune than dRel delta.
+            # vRel > 0.5 m/s means lead is clearly moving away. This avoids false resumes
+            # from radar dRel fluctuations (which can be ±0.5m on stationary targets).
+            lead_moving = lead_active and lead_vrel > 0.5
+
+            # Secondary trigger: gap grew by >1.5m from standstill baseline (noisy, so threshold higher)
+            gap_growth = 0.0
             gap_grew = False
-            if self.lead_distance > 0 and self.standstill_start_distance > 0:
+            if lead_active and self.standstill_start_distance > 0:
               gap_growth = self.lead_distance - self.standstill_start_distance
-              gap_grew = gap_growth > 1.6  # Lead moved away >1.6m
-            elif self.standstill_start_distance > 0 and self.lead_distance == 0:
-              # Lead was there but now gone (moved far away or changed lanes)
-              gap_grew = True
+              gap_grew = gap_growth > 1.5
 
             # Allow resume in these cases:
-            # 1. Strong acceleration (>= 0.3 m/s²) - normal traffic flow
-            # 2. Gap grew significantly (>1.6m) - need to close gap
-            # 3. Sustained weak request (15+ frames = 0.3s) - slow creep following
-            if accel_cmd >= 0.3 or gap_grew or self.accel_request_frames >= 15:
-              pass  # Allow acceleration through
+            # 1. Lead clearly moving (vRel > 0.5 m/s) — primary, noise-immune
+            # 2. Gap grew significantly (>1.5m) — secondary, higher threshold than before
+            # 3. Strong accel request (>= 0.3 m/s²) — planner is confident
+            # 4. Sustained weak request (8+ frames = 0.16s) — slow creep following
+            if lead_moving or gap_grew or accel_cmd >= 0.3 or self.accel_request_frames >= 8:
+              # Boost accel proportionally when lead is well away
+              if gap_growth > 2.5 or lead_vrel > 1.5:
+                accel_cmd = max(accel_cmd, min(accel_cmd + 0.4, 1.5))  # push harder, cap at 1.5
+              elif gap_growth > 1.5 or lead_vrel > 0.8:
+                accel_cmd = max(accel_cmd, min(accel_cmd + 0.2, 1.2))  # moderate boost
             else:
-              accel_cmd = 0  # Suppress until one of above conditions met
+              accel_cmd = 0  # Suppress: lead is still stationary
           else:
             # No positive accel requested - reset counter and allow braking
             self.accel_request_frames = 0

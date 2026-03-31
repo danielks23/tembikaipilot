@@ -183,6 +183,13 @@ def main(demo=False):
       CP = msg
   cloudlog.info("modeld got CarParams: %s", CP.carName)
 
+  # KA2 dual-camera yaw correction — tunable on-device without code changes.
+  # Physical offset is fixed hardware (4cm), this param is the resulting yaw correction in radians.
+  # Default: 0.04m / 20.0m = 0.002 rad. Increase if car drifts left; decrease if it overcorrects right.
+  # Set via: params.put("KA2CameraYaw", "0.003")  then restart modeld.
+  _ka2_yaw_raw = params.get("KA2CameraYaw")
+  KA2_CAM_OFFSET_YAW_CONST = float(_ka2_yaw_raw) if _ka2_yaw_raw else 0.002  # radians
+
   # TODO this needs more thought, use .2s extra for now to estimate other delays
   steer_delay = CP.steerActuatorDelay + .2
 
@@ -230,8 +237,23 @@ def main(demo=False):
     lateral_control_params = np.array([sm["carState"].vEgo, steer_delay], dtype=np.float32)
     if sm.updated["liveCalibration"]:
       device_from_calib_euler = np.array(sm["liveCalibration"].rpyCalib, dtype=np.float32)
-      model_transform_main = get_warp_matrix(device_from_calib_euler, main_wide_camera, False).astype(np.float32)
-      model_transform_extra = get_warp_matrix(device_from_calib_euler, True, True).astype(np.float32)
+
+      # KA2 dual-camera lateral offset correction.
+      # KA2_CAM_OFFSET_YAW_CONST is read from params at startup (key: "KA2CameraYaw", default 0.002 rad).
+      # Increase if the car still drifts left; decrease if it overcorrects right.
+      # To update on-device: params.put("KA2CameraYaw", "0.003") then restart modeld.
+      main_euler = device_from_calib_euler.copy()
+      extra_euler = device_from_calib_euler.copy()
+      if use_extra_client:
+        # Both cameras present: telephoto = main (right of center), wide = extra (left of center)
+        main_euler[2]  -= KA2_CAM_OFFSET_YAW_CONST  # telephoto is right → subtract
+        extra_euler[2] += KA2_CAM_OFFSET_YAW_CONST  # wide is left → add
+      else:
+        # Single wide-camera mode only
+        main_euler[2]  += KA2_CAM_OFFSET_YAW_CONST  # wide is left → add
+
+      model_transform_main = get_warp_matrix(main_euler, main_wide_camera, False).astype(np.float32)
+      model_transform_extra = get_warp_matrix(extra_euler, True, True).astype(np.float32)
       live_calib_seen = True
 
     traffic_convention = np.zeros(2)
