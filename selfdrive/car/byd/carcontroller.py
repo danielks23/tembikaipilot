@@ -266,6 +266,12 @@ class CarController(CarControllerBase):
           self.accel_request_frames = 0
           self.standstill_start_distance = 0.0
 
+        # EV efficiency: coasting band — avoid tiny friction brake pulses for small decel requests.
+        # The ATTO3's own regen management handles natural speed bleed-off.
+        # Only apply brakes when decel is meaningfully requested (< -0.15 m/s²).
+        if self.CP.carFingerprint == CAR.ATTO3 and -0.15 < accel_cmd < 0:
+          accel_cmd = 0.0  # coast, don't friction-brake
+
         can_sends.append(create_accel_command(self.packer, accel_cmd, long_active, self.accel_mult, brake_hold))
       else:
         if CS.out.genericToggle or (CS.out.standstill and CC.enabled and (self.frame % 100 == 0)):
