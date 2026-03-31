@@ -17,7 +17,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerControlType = car.CarParams.SteerControlType.angle # angle-based steering control
     ret.steerLimitTimer = 0.8               # time before steerLimitAlert is issued (0.8s avoids false alarms on sharp curves)
-    ret.steerActuatorDelay = 0.01           # Steering wheel actuator delay in seconds
+    ret.steerActuatorDelay = 0.10           # EPS mechanical+electrical delay ~100ms
 
     ret.lateralTuning.init('pid')
 
@@ -34,13 +34,16 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kpV = [0.8, 0.7, 0.6]
     ret.longitudinalTuning.kiV = [0.5, 0.4, 0.3]
     ret.lateralTuning.pid.kf = 0.00015
-    ret.longitudinalActuatorDelayLowerBound = 0.2
-    ret.longitudinalActuatorDelayUpperBound = 0.3
+    ret.longitudinalActuatorDelayLowerBound = 0.1
+    ret.longitudinalActuatorDelayUpperBound = 0.2
     ret.wheelSpeedFactor = 0.66
 
     # Car-specific parameters
     if candidate == CAR.ATTO3:
       # ========== BYD ATTO3 Configuration ==========
+      ret.centerToFront = ret.wheelbase * 0.48  # EV: floor battery = near 50/50 weight dist
+      ret.longitudinalActuatorDelayLowerBound = 0.08  # EV instant torque: faster than ICE
+      ret.longitudinalActuatorDelayUpperBound = 0.16
       ret.wheelSpeedFactor = 0.660
       ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
       ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
