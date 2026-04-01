@@ -213,7 +213,8 @@ class Ka2(HardwareBase):
       except Exception:
         reason_str = ""
 
-      print(f"ModemManager: {manufacturer} {model} (fw: {revision}) - State: {state_name}{reason_str}, Signal: {signal_quality[0]}%", flush=True)
+      if state != MM_MODEM_STATE.FAILED:
+        print(f"ModemManager: {manufacturer} {model} (fw: {revision}) - State: {state_name}{reason_str}, Signal: {signal_quality[0]}%", flush=True)
     except Exception:
       print(f"ModemManager: Found modem at {modem_path}", flush=True)
 
