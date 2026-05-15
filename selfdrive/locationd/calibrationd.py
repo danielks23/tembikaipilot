@@ -35,11 +35,7 @@ MAX_ALLOWED_YAW_SPREAD = np.radians(2)
 MAX_ALLOWED_PITCH_SPREAD = np.radians(4)
 
 RPY_INIT = np.array([0.0, 0.0, 0.0])
-# KA2 dual-camera lateral offset: wide camera is 4cm LEFT of device center.
-# This seeds the wideFromDeviceEuler averaging buffer in calibrationd.
-# Note: the actual image-warp correction for both cameras is applied in modeld.py
-# (KA2_CAM_OFFSET_YAW), which is persistent and cannot be overwritten by calibration.
-WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.04])  # wide cam 4cm left → +yaw seed
+WIDE_FROM_DEVICE_EULER_INIT = np.array([0.0, 0.0, 0.0])
 
 HEIGHT_INIT = np.array([1.22])
 

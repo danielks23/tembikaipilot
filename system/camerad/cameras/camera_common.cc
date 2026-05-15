@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 
+#include "third_party/libyuv/include/libyuv.h"
 #include <jpeglib.h>
 #include <signal.h>
 

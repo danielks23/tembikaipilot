@@ -13,9 +13,6 @@ venv/
 model2.png
 a.out
 .hypothesis
-.cache/
-/docs_site/
-prebuilt
 
 *.dylib
 *.DSYM
@@ -37,11 +34,6 @@ prebuilt
 *.pyxbldc
 *.vcd
 *.qm
-*.mp4
-*.zst
-*.stats
-*_pyx.cpp
-__pycache__
 config.json
 clcache
 compile_commands.json
