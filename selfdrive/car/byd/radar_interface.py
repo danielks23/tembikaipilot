@@ -22,11 +22,10 @@ MISS_MAX = 15          # Delete tracks after 15 missed frames (increased from 4 
 # --- Plausibility gates ---
 DREL_MIN = 0.75        # near-field radar ghosts
 DREL_MAX = 200.0
-# Speed-adaptive lateral filtering (calculated dynamically below)
-# Base values:
-YREL_BASE_URBAN = 2.0   # < 32 kph (urban) - looser for low speed maneuvers
-YREL_BASE_HIGHWAY = 1.5 # < 80 kph (highway) - balanced
-YREL_BASE_HIGH = 1.2    # high speed - tighter, more critical
+# Filter side-lane vehicles to prevent phantom braking
+# Balanced at 1.5m - allows legitimate vehicles while filtering obvious side-lane vehicles
+# Typical lane width ~3.5m, so 1.5m = center ~43% (reasonable for lane keeping)
+YREL_ABS_MAX = 1.5     # Balanced: filter obvious side-lane vehicles (>1.5m) while allowing legitimate vehicles
 VREL_ABS_MAX = 60.0
 AREL_ABS_MAX = 12.0
 
@@ -60,27 +59,6 @@ class RadarInterface(RadarInterfaceBase):
     # Key: track_id, Value: (dRel, yRel, vRel, miss_frames)
     self.track_history: dict[int, tuple[float, float, float, int]] = {}
     self.MAX_HISTORY_FRAMES = 10  # Keep history for up to 10 frames after track disappears
-
-    # Track quality: velocity consistency score for confidence calculation
-    self.track_consistency: dict[int, float] = {}  # track_id -> consistency score (0.0-1.0)
-
-  def _get_yrel_max(self, dRel: float, v_ego: float) -> float:
-    """Calculate lateral threshold based on speed and distance"""
-    # Base thresholds by speed
-    if v_ego < 8.9:  # < 32 kph (urban)
-      base_yrel = YREL_BASE_URBAN
-    elif v_ego < 22.2:  # < 80 kph (highway)
-      base_yrel = YREL_BASE_HIGHWAY
-    else:  # High speed
-      base_yrel = YREL_BASE_HIGH
-
-    # Distance modifier: stricter for far targets
-    if dRel > 50:
-      return base_yrel * 0.6  # Very strict for distant vehicles
-    elif dRel > 30:
-      return base_yrel * 0.7
-    else:
-      return base_yrel
 
   def update(self, can_strings, v_ego, a_ego):
     if self.rcp is None:
@@ -196,7 +174,10 @@ class RadarInterface(RadarInterfaceBase):
       vRel = vlead - v_ego
       aRel = alead - a_ego
 
-      yrel_max = self._get_yrel_max(dRel, v_ego)
+      # Balanced filtering: YREL_ABS_MAX set to 1.5m
+      # This filters out obvious side-lane vehicles while allowing legitimate vehicles
+      # Additional check: For vehicles further than 30m, require stricter lateral filtering
+      yrel_max = YREL_ABS_MAX if dRel <= 30.0 else YREL_ABS_MAX * 0.7  # Stricter for far vehicles (1.05m)
 
       plausible = (
         meas_ok and

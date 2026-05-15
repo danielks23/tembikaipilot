@@ -35,7 +35,7 @@ class CarState(CarStateBase):
     self.lka_on = cp_cam.vl["LKAS_HUD_ADAS"]['STEER_ACTIVE_ACTIVE_LOW']
 
     self.lkas_rdy_btn = cp.vl["PCM_BUTTONS"]['LKAS_ON_BTN']
-    self.ahb = cp_cam.vl["LKAS_HUD_ADAS"]['SET_ME_XFF']
+    self.abh = cp_cam.vl["LKAS_HUD_ADAS"]['SET_ME_XFF']
     self.passthrough = cp_cam.vl["LKAS_HUD_ADAS"]['TSR_STATUS']
     self.HMA = cp_cam.vl["LKAS_HUD_ADAS"]['HMA']
     self.pt2 = cp_cam.vl["LKAS_HUD_ADAS"]['PT2']
@@ -47,17 +47,11 @@ class CarState(CarStateBase):
     # EV irrelevant messages
     ret.brakeHoldActive = False
 
-    # Select CAN bus for ACC messages based on BYD architecture
-    # ATTO3/M6: ACC messages on camera bus (0x32D, 0x32E on bus 2)
-    # SEAL/SEALION7: ACC messages on main bus (0x32D, 0x32E on bus 0)
     if self.CP.carFingerprint in (CAR.ATTO3, CAR.M6):
       parser_alt = cp_cam
     else:
       parser_alt = cp
-    
-    # Use CP flag for consistency (fixed: was incorrectly hardcoded False for SEAL/SEALION7)
-    # All BYD models support openpilot longitudinal control per interface.py line 27
-    self.op_long = self.CP.openpilotLongitudinalControl
+      self.op_long = False
 
 
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -102,8 +96,6 @@ class CarState(CarStateBase):
     self.prev_angle = ret.steeringAngleDeg
     ret.steeringTorque = cp.vl["STEERING_TORQUE"]['MAIN_TORQUE']
     ret.steeringTorqueEps = cp.vl["STEER_MODULE_2"]['DRIVER_EPS_TORQUE'] * steer_dir
-    # Light touch detection (6Nm) - indicates driver hands on wheel for monitoring
-    # Collaborative steering uses 50Nm sustained (1 sec) in carcontroller.py for unlatch
     ret.steeringPressed = bool(abs(ret.steeringTorqueEps) > 6)
 
     # TODO: get the real value
@@ -111,9 +103,7 @@ class CarState(CarStateBase):
     ret.stockFcw = False
     ret.cruiseState.available = any([parser_alt.vl["ACC_HUD_ADAS"]["ACC_ON1"], parser_alt.vl["ACC_HUD_ADAS"]["ACC_CONTROLLABLE_AND_ON"]])
 
-    # Distance button personality mapping (1-4 bars = Aggressive/Standard/Relaxed)
-    # DBC: SET_DISTANCE values: 1="1bar", 2="2bar", 4="3bar", 8="4bar"
-    # Personality: 0=Aggressive, 1=Standard, 2=Relaxed (3-4 bars both map to Relaxed)
+    # VAL_ 813 SET_DISTANCE 8 "4bar" 4 "3bar" 2 "2bar" 1 "1bar" ;
     distance_val = int(parser_alt.vl["ACC_HUD_ADAS"]['SET_DISTANCE']) if self.op_long else 1
     self.set_long_personality(2 if distance_val in (4, 8) else distance_val - 1)
 
@@ -125,28 +115,21 @@ class CarState(CarStateBase):
     if bool(parser_alt.vl["ACC_CMD"]["ACC_REQ_NOT_STANDSTILL"]):
       self.is_cruise_latch = True
 
-    # BYD minimum set speed is 30 km/h (stock ACC limitation)
-    MIN_SET_SPEED_KPH = 30
-    
     # byd speedCluster will follow wheelspeed if cruiseState is not available
     if ret.cruiseState.available:
-      ret.cruiseState.speedCluster = max(int(parser_alt.vl["ACC_HUD_ADAS"]['SET_SPEED']), MIN_SET_SPEED_KPH) * CV.KPH_TO_MS
+      ret.cruiseState.speedCluster = max(int(parser_alt.vl["ACC_HUD_ADAS"]['SET_SPEED']), 30) * CV.KPH_TO_MS
     else:
       ret.cruiseState.speedCluster = 0
 
     ret.cruiseState.speed = ret.cruiseState.speedCluster / HUD_MULTIPLIER
-    # Force standstill=False to enable stop-and-go auto-resume when lead departs
-    # Stock standstill signal: parser_alt.vl["ACC_CMD"]["STANDSTILL_STATE"]
-    ret.cruiseState.standstill = False
+    ret.cruiseState.standstill = False # force false first for SNG  #bool(cp_cam.vl["ACC_CMD"]["STANDSTILL_STATE"])
     ret.cruiseState.nonAdaptive = False
 
-    stock_acc_on = bool(parser_alt.vl["ACC_CMD"]["ACC_CONTROLLABLE_AND_ON"])
+    stock_acc_on =  bool(parser_alt.vl["ACC_CMD"]["ACC_CONTROLLABLE_AND_ON"])
     if not ret.cruiseState.available or ret.brakePressed or not stock_acc_on:
       self.is_cruise_latch = False
 
-    # SEAL/SEALION7/M6 use stock CRUISE_STATE signal directly
-    # Values: 3=active, 5=active, 6=active with lead, 7=active (alternative state)
-    if self.CP.carFingerprint in (CAR.SEAL, CAR.SEALION7, CAR.M6):
+    if self.CP.carFingerprint in (CAR.SEAL, CAR.SEALION7 , CAR.M6):
       cruise_state = parser_alt.vl["ACC_HUD_ADAS"]["CRUISE_STATE"]
       ret.cruiseState.enabled = cruise_state in (3, 5, 6, 7)
     else:

@@ -1,5 +1,3 @@
-import math
-
 def create_can_steer_command(packer, steer_angle, steer_req, is_standstill, ecu_fault, recovery_btn):
 
   set_me_xe = 0xE if is_standstill else 0xB
@@ -25,7 +23,7 @@ def create_can_steer_command(packer, steer_angle, steer_req, is_standstill, ecu_
   return packer.make_can_msg("STEERING_MODULE_ADAS", 0, values)
 
 def create_accel_command(packer, accel, enabled, accel_mult, brake_hold):
-  accel = max(min(accel * accel_mult, 30), -88)  # -88 allows full -3.5 m/s² at accel_mult=25 (25*3.5=87.5)
+  accel = max(min(accel * accel_mult, 30), -50)
   accel_factor = 12 if accel >= 2 else 5 if accel < 0 else 11
   enabled &= not brake_hold
 
@@ -39,7 +37,6 @@ def create_accel_command(packer, accel, enabled, accel_mult, brake_hold):
     "SET_ME_25_2": 25,
     "ACC_ON_1": enabled,
     "ACC_ON_2": enabled,
-    #"ENGAGE_BIT": enabled,  # Keep ENGAGE_BIT based on openpilot's enabled state
     # some unknown state, 12 when accel, below 11 when braking, 11 when cruising
     "ACCEL_FACTOR": accel_factor if enabled else 0,
     # some unknown state, 0 when not engaged, 3/4 when accel, 8/9 when accel uphill, 1 when braking (all speculation)
@@ -59,7 +56,8 @@ def create_accel_command(packer, accel, enabled, accel_mult, brake_hold):
 
 # 50hz
 def create_lkas_hud(packer, lat_active, lss_state, lss_alert, tsr, ahb, passthrough,\
-    hma, pt2, pt3, pt4, pt5, lka_on, car_fingerprint=None):
+    hma, pt2, pt3, pt4, pt5, lka_on):
+
   values = {
     "STEER_ACTIVE_ACTIVE_LOW": lka_on,
     "LEFT_LANE_VISIBLE": lat_active,
@@ -89,7 +87,6 @@ def send_buttons(packer, state, cancel, bus):
       "SET_ME_1_1": 1,
       "SET_ME_1_2": 1,
       "ACC_ON_BTN": cancel,
-      "LKAS_ON_BTN": 0,
   }
   return packer.make_can_msg("PCM_BUTTONS", bus, values)
 

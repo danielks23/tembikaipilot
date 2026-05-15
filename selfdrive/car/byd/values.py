@@ -19,9 +19,7 @@ class CAR(Platforms):
   ATTO3 = BYDPlatformConfig(
     "BYD ATTO 3",
     CarInfo("BYD Atto 3", "ALL"),
-    # mass: 1750kg kerb + 75kg driver + 50kg load = 1875kg
-    # steerRatio: wheelbase/turning_radius geometry → arctan(2.72/5.25)=27.4° front wheel, ~15.0 measured
-    specs=CarSpecs(mass=1875., wheelbase=2.72, steerRatio=15.0)
+    specs=CarSpecs(mass=2090., wheelbase=2.72, steerRatio=16.0)
   )
   M6 = BYDPlatformConfig(
     "BYD M6",
