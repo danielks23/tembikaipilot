@@ -230,21 +230,8 @@ def main(demo=False):
     lateral_control_params = np.array([sm["carState"].vEgo, steer_delay], dtype=np.float32)
     if sm.updated["liveCalibration"]:
       device_from_calib_euler = np.array(sm["liveCalibration"].rpyCalib, dtype=np.float32)
-
-      # KA2 dual-camera lateral offset correction.
-      # KA2_CAM_OFFSET_YAW_CONST is read from params at startup (key: "KA2CameraYaw", default 0.002 rad).
-      # Increase if the car still drifts left; decrease if it overcorrects right.
-      # To update on-device: params.put("KA2CameraYaw", "0.003") then restart modeld.
-      main_euler = device_from_calib_euler.copy()
-      extra_euler = device_from_calib_euler.copy()
-      if use_extra_client:
-        main_euler = device_from_calib_euler.copy()
-        extra_euler = device_from_calib_euler.copy()
-      else:
-        main_euler = device_from_calib_euler.copy()
-
-      model_transform_main = get_warp_matrix(main_euler, main_wide_camera, False).astype(np.float32)
-      model_transform_extra = get_warp_matrix(extra_euler, True, True).astype(np.float32)
+      model_transform_main = get_warp_matrix(device_from_calib_euler, main_wide_camera, False).astype(np.float32)
+      model_transform_extra = get_warp_matrix(device_from_calib_euler, True, True).astype(np.float32)
       live_calib_seen = True
 
     traffic_convention = np.zeros(2)

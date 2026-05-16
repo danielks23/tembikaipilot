@@ -101,7 +101,6 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"CameraDebugExpTime", CLEAR_ON_MANAGER_START},
     {"CarBatteryCapacity", PERSISTENT},
     {"CarName", PERSISTENT},
-    {"KA2CameraYaw", PERSISTENT},
     {"CarParams", CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION},
     {"CarParamsCache", CLEAR_ON_MANAGER_START},
     {"CarParamsPersistent", PERSISTENT},

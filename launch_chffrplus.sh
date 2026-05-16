@@ -83,12 +83,7 @@ function launch {
 
   # start manager
   cd selfdrive/manager
-  # Rebuild if prebuilt doesn't exist or the stored commit hash doesn't match HEAD
-  _current_commit=$(git -C "$DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
-  _stored_commit=$(cat "$DIR/prebuilt" 2>/dev/null || echo "")
-  if [ ! -f "$DIR/prebuilt" ] || [ "$_current_commit" != "$_stored_commit" ]; then
-    echo "Code change detected (stored: $_stored_commit, current: $_current_commit), rebuilding..."
-    rm -f "$DIR/prebuilt"
+  if [ ! -f $DIR/prebuilt ]; then
     ./build.py
   fi
   ./manager.py
