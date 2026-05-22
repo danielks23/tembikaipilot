@@ -3,13 +3,10 @@
 #include <string>
 
 #include "system/hardware/base.h"
+#include "system/hardware/ka2/hardware.h"
 #include "common/util.h"
 
-#if QCOM2
-#include "system/hardware/tici/hardware.h"
-#define Hardware HardwareTici
-#elif RK3588
-#include "system/hardware/ka2/hardware.h"
+#ifdef RK3588
 #define Hardware HardwareKa2
 #else
 #include "system/hardware/pc/hardware.h"

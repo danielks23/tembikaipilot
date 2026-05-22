@@ -133,9 +133,6 @@ class Ka2(HardwareBase):
   def get_som_power_draw(self):
     return 0;
 
-  def get_nvme_temperatures(self):
-    return []
-
   def get_screen_brightness(self):
     return 0
 
@@ -353,16 +350,7 @@ class Ka2(HardwareBase):
     # boardd core
     #affine_irq(4, "spi_geni")         # SPI
     #affine_irq(4, "xhci-hcd:usb3")    # aux panda USB (or potentially anything else on USB)
-    #if "tici" in self.get_device_type():
-    #  affine_irq(4, "xhci-hcd:usb1")  # internal panda USB (also modem)
-
-    # GPU
-    #affine_irq(5, "kgsl-3d0")
-
-    # camerad core
-    #camera_irqs = ("cci", "cpas_camnoc", "cpas-cdm", "csid", "ife", "csid-lite", "ife-lite")
-    #for n in camera_irqs:
-    #  affine_irq(5, n)
+    #affine_irq(4, "xhci-hcd:usb1")    # internal panda USB (also modem)
 
 
   def get_gpu_usage_percent(self):

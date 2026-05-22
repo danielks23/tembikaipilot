@@ -13,8 +13,7 @@ class HardwareKa2 : public HardwareNone {
 public:
   static constexpr float MAX_VOLUME = 0.9;
   static constexpr float MIN_VOLUME = 0.1;
-  static bool TICI() { return false; }
-  static bool AGNOS() { return false; }
+  static bool AGNOS() { return true; }
   static bool KA2() { return true; }
   static std::string get_os_version() {
     return "RK-AGNOS " + util::read_file("/VERSION");

@@ -36,6 +36,5 @@ public:
   static void config_cpu_rendering(bool offscreen);
 
   static bool PC() { return false; }
-  static bool TICI() { return false; }
   static bool AGNOS() { return false; }
 };

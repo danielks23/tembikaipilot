@@ -76,35 +76,35 @@ const EncoderInfo main_driver_encoder_info = {
 
 const EncoderInfo stream_road_encoder_info = {
   .publish_name = "livestreamRoadEncodeData",
-  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   .record = false,
   .bitrate = LIVESTREAM_BITRATE,
+  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   INIT_ENCODE_FUNCTIONS(LivestreamRoadEncode),
 };
 
 const EncoderInfo stream_wide_road_encoder_info = {
   .publish_name = "livestreamWideRoadEncodeData",
-  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   .record = false,
   .bitrate = LIVESTREAM_BITRATE,
+  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   INIT_ENCODE_FUNCTIONS(LivestreamWideRoadEncode),
 };
 
 const EncoderInfo stream_driver_encoder_info = {
   .publish_name = "livestreamDriverEncodeData",
-  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   .record = false,
   .bitrate = LIVESTREAM_BITRATE,
+  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   INIT_ENCODE_FUNCTIONS(LivestreamDriverEncode),
 };
 
 const EncoderInfo qcam_encoder_info = {
   .publish_name = "qRoadEncodeData",
   .filename = "qcamera.ts",
-  .bitrate = QCAM_BITRATE,
-  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   .frame_width = 526,
   .frame_height = 330,
+  .bitrate = QCAM_BITRATE,
+  .encode_type = cereal::EncodeIndex::Type::QCAMERA_H264,
   INIT_ENCODE_FUNCTIONS(QRoadEncode),
 };
 

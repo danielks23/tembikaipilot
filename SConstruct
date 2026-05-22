@@ -12,12 +12,12 @@ SCons.Warnings.warningAsException(True)
 # pending upstream fix - https://github.com/SCons/scons/issues/4461
 #SetOption('warn', 'all')
 
-TICI = os.path.isfile('/TICI')
 KA2 = os.path.isfile('/KA2')
-AGNOS = TICI
+AGNOS = KA2
+PC = not KA2
 
-device = 'TICI' if TICI else 'KA2'
-assert device in ['TICI','KA2']
+device = 'KA2' if KA2 else 'PC'
+assert device in ['KA2', 'PC']
 
 Decider('MD5-timestamp')
 
@@ -74,7 +74,7 @@ AddOption('--minimal',
           help='the minimum build to run openpilot. no tests, tools, etc.')
 
 ## Architecture name breakdown (arch)
-## - larch64: linux tici aarch64 or ka2 aarch64
+## - larch64: linux ka2 aarch64
 ## - aarch64: linux pc
 ## - x86_64:  linux pc x64
 ## - Darwin:  mac x64 or arm64
@@ -82,7 +82,7 @@ real_arch = arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rst
 if platform.system() == "Darwin":
   arch = "Darwin"
   brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
-elif arch == "aarch64" and (AGNOS or KA2):
+elif arch == "aarch64" and KA2:
   arch = "larch64"
 
 assert arch in ["larch64", "aarch64", "x86_64", "Darwin"]
@@ -319,8 +319,6 @@ else:
   qt_libs = [f"Qt5{m}" for m in qt_modules]
   if arch == "larch64":
     qt_libs += ["GLESv2"]
-    if device == "TICI":
-      qt_libs += ["wayland-client"]
     qt_env.PrependENVPath('PATH', Dir("#third_party/qt5/larch64/bin/").abspath)
   elif arch != "Darwin":
     qt_libs += ["GL"]
