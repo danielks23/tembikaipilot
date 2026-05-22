@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 from typing import NamedTuple
 
-from openpilot.selfdrive.car.chrysler.values import CAR as CHRYSLER
-from openpilot.selfdrive.car.gm.values import CAR as GM
-from openpilot.selfdrive.car.ford.values import CAR as FORD
 from openpilot.selfdrive.car.honda.values import CAR as HONDA
 from openpilot.selfdrive.car.hyundai.values import CAR as HYUNDAI
 from openpilot.selfdrive.car.nissan.values import CAR as NISSAN
@@ -11,52 +8,16 @@ from openpilot.selfdrive.car.mazda.values import CAR as MAZDA
 from openpilot.selfdrive.car.subaru.values import CAR as SUBARU
 from openpilot.selfdrive.car.toyota.values import CAR as TOYOTA
 from openpilot.selfdrive.car.volkswagen.values import CAR as VOLKSWAGEN
-from openpilot.selfdrive.car.tesla.values import CAR as TESLA
-from openpilot.selfdrive.car.body.values import CAR as COMMA
 from openpilot.selfdrive.car.dnga.values import CAR as DNGA
 from openpilot.selfdrive.car.proton.values import CAR as PROTON
 from openpilot.selfdrive.car.byd.values import CAR as BYD
 
 # TODO: add routes for these cars
 non_tested_cars = [
-  FORD.F_150_MK14,
-  GM.CADILLAC_ATS,
-  GM.HOLDEN_ASTRA,
-  GM.MALIBU,
   HYUNDAI.GENESIS_G90,
   HONDA.ODYSSEY_CHN,
   VOLKSWAGEN.CRAFTER_MK2,  # need a route from an ACC-equipped Crafter
   SUBARU.FORESTER_HYBRID,
-  CHRYSLER.DODGE_DURANGO,
-  CHRYSLER.JEEP_GRAND_CHEROKEE,
-  CHRYSLER.JEEP_GRAND_CHEROKEE_2019,
-  CHRYSLER.PACIFICA_2017_HYBRID,
-  CHRYSLER.PACIFICA_2018,
-  CHRYSLER.PACIFICA_2018_HYBRID,
-  CHRYSLER.PACIFICA_2019_HYBRID,
-  CHRYSLER.PACIFICA_2020,
-  CHRYSLER.RAM_1500,
-  CHRYSLER.RAM_HD,
-  COMMA.BODY,
-  FORD.BRONCO_SPORT_MK1,
-  FORD.ESCAPE_MK4,
-  FORD.EXPLORER_MK6,
-  FORD.FOCUS_MK4,
-  #FORD.FUSION,
-  FORD.F_150_LIGHTNING_MK1,
-  FORD.MAVERICK_MK1,
-  FORD.MUSTANG_MACH_E_MK1,
-  GM.ACADIA,
-  GM.BOLT_EUV,
-  GM.BUICK_LACROSSE,
-  GM.BUICK_REGAL,
-  GM.EQUINOX,
-  GM.ESCALADE,
-  GM.ESCALADE_ESV,
-  GM.ESCALADE_ESV_2019,
-  GM.SILVERADO,
-  GM.TRAILBLAZER,
-  GM.VOLT,
   HONDA.ACCORD,
   HONDA.ACURA_ILX,
   HONDA.ACURA_RDX,
@@ -167,8 +128,6 @@ non_tested_cars = [
   SUBARU.OUTBACK_2023,
   SUBARU.OUTBACK_PREGLOBAL,
   SUBARU.OUTBACK_PREGLOBAL_2018,
-  TESLA.AP1_MODELS,
-  TESLA.AP2_MODELS,
   TOYOTA.ALPHARD_TSS2,
   TOYOTA.AVALON,
   TOYOTA.AVALON_2019,
@@ -256,39 +215,6 @@ class CarTestRoute(NamedTuple):
 
 routes = [
   CarTestRoute("870ce22d4093b701|2026-01-21--05-13-58", DNGA.MYVI),
-  # CarTestRoute("efdf9af95e71cd84|2022-05-13--19-03-31", COMMA.BODY),
-
-  # CarTestRoute("0c94aa1e1296d7c6|2021-05-05--19-48-37", CHRYSLER.JEEP_GRAND_CHEROKEE),
-  # CarTestRoute("91dfedae61d7bd75|2021-05-22--20-07-52", CHRYSLER.JEEP_GRAND_CHEROKEE_2019),
-  # CarTestRoute("420a8e183f1aed48|2020-03-05--07-15-29", CHRYSLER.PACIFICA_2017_HYBRID),
-  # CarTestRoute("43a685a66291579b|2021-05-27--19-47-29", CHRYSLER.PACIFICA_2018),
-  # CarTestRoute("378472f830ee7395|2021-05-28--07-38-43", CHRYSLER.PACIFICA_2018_HYBRID),
-  # CarTestRoute("8190c7275a24557b|2020-01-29--08-33-58", CHRYSLER.PACIFICA_2019_HYBRID),
-  # CarTestRoute("3d84727705fecd04|2021-05-25--08-38-56", CHRYSLER.PACIFICA_2020),
-  # CarTestRoute("221c253375af4ee9|2022-06-15--18-38-24", CHRYSLER.RAM_1500),
-  # CarTestRoute("8fb5eabf914632ae|2022-08-04--17-28-53", CHRYSLER.RAM_HD, segment=6),
-  # CarTestRoute("3379c85aeedc8285|2023-12-07--17-49-39", CHRYSLER.DODGE_DURANGO),
-
-  # CarTestRoute("54827bf84c38b14f|2023-01-25--14-14-11", FORD.BRONCO_SPORT_MK1),
-  # CarTestRoute("f8eaaccd2a90aef8|2023-05-04--15-10-09", FORD.ESCAPE_MK4),
-  # CarTestRoute("62241b0c7fea4589|2022-09-01--15-32-49", FORD.EXPLORER_MK6),
-  # CarTestRoute("e886087f430e7fe7|2023-06-16--23-06-36", FORD.FOCUS_MK4),
-  # CarTestRoute("bd37e43731e5964b|2023-04-30--10-42-26", FORD.MAVERICK_MK1),
-  # CarTestRoute("112e4d6e0cad05e1|2023-11-14--08-21-43", FORD.F_150_LIGHTNING_MK1),
-  # CarTestRoute("83a4e056c7072678|2023-11-13--16-51-33", FORD.MUSTANG_MACH_E_MK1),
-
-  # CarTestRoute("7cc2a8365b4dd8a9|2018-12-02--12-10-44", GM.ACADIA),
-  # CarTestRoute("aa20e335f61ba898|2019-02-05--16-59-04", GM.BUICK_REGAL),
-  # CarTestRoute("75a6bcb9b8b40373|2023-03-11--22-47-33", GM.BUICK_LACROSSE),
-  # CarTestRoute("e746f59bc96fd789|2024-01-31--22-25-58", GM.EQUINOX),
-  # CarTestRoute("ef8f2185104d862e|2023-02-09--18-37-13", GM.ESCALADE),
-  # CarTestRoute("46460f0da08e621e|2021-10-26--07-21-46", GM.ESCALADE_ESV),
-  # CarTestRoute("168f8b3be57f66ae|2023-09-12--21-44-42", GM.ESCALADE_ESV_2019),
-  # CarTestRoute("c950e28c26b5b168|2018-05-30--22-03-41", GM.VOLT),
-  # CarTestRoute("f08912a233c1584f|2022-08-11--18-02-41", GM.BOLT_EUV, segment=1),
-  # CarTestRoute("555d4087cf86aa91|2022-12-02--12-15-07", GM.BOLT_EUV, segment=14),  # Bolt EV
-  # CarTestRoute("38aa7da107d5d252|2022-08-15--16-01-12", GM.SILVERADO),
-  # CarTestRoute("5085c761395d1fe6|2023-04-07--18-20-06", GM.TRAILBLAZER),
 
   # CarTestRoute("0e7a2ba168465df5|2020-10-18--14-14-22", HONDA.ACURA_RDX_3G),
   # CarTestRoute("a74b011b32b51b56|2020-07-26--17-09-36", HONDA.CIVIC),
@@ -506,9 +432,6 @@ routes = [
   # CarTestRoute("fb53c640f499b73d|2021-06-01--04-17-56", MAZDA.MAZDA6),
   # CarTestRoute("f6d5b1a9d7a1c92e|2021-07-08--06-56-59", MAZDA.CX9_2021),
   # CarTestRoute("a4af1602d8e668ac|2022-02-03--12-17-07", MAZDA.CX5_2022),
-
-  # CarTestRoute("6c14ee12b74823ce|2021-06-30--11-49-02", TESLA.AP1_MODELS),
-  # CarTestRoute("bb50caf5f0945ab1|2021-06-19--17-20-18", TESLA.AP2_MODELS),
 
   # Segments that test specific issues
   # Controls mismatch due to interceptor threshold

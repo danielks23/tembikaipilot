@@ -5,11 +5,7 @@
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
-#include "safety/safety_tesla.h"
-#include "safety/safety_gm.h"
-#include "safety/safety_ford.h"
 #include "safety/safety_hyundai.h"
-#include "safety/safety_chrysler.h"
 #include "safety/safety_subaru.h"
 #include "safety/safety_subaru_preglobal.h"
 #include "safety/safety_mazda.h"
@@ -17,7 +13,6 @@
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
-#include "safety/safety_body.h"
 #include "safety/safety_dnga.h"
 #include "safety/safety_proton.h"
 #include "safety/safety_byd.h"
@@ -32,18 +27,12 @@
 #define SAFETY_HONDA_NIDEC 1U
 #define SAFETY_TOYOTA 2U
 #define SAFETY_ELM327 3U
-#define SAFETY_GM 4U
-#define SAFETY_HONDA_BOSCH_GIRAFFE 5U
-#define SAFETY_FORD 6U
 #define SAFETY_HYUNDAI 8U
-#define SAFETY_CHRYSLER 9U
-#define SAFETY_TESLA 10U
 #define SAFETY_SUBARU 11U
 #define SAFETY_MAZDA 13U
 #define SAFETY_NISSAN 14U
 #define SAFETY_VOLKSWAGEN_MQB 15U
 #define SAFETY_ALLOUTPUT 17U
-#define SAFETY_GM_ASCM 18U
 #define SAFETY_NOOUTPUT 19U
 #define SAFETY_HONDA_BOSCH 20U
 #define SAFETY_VOLKSWAGEN_PQ 21U
@@ -52,7 +41,6 @@
 #define SAFETY_HYUNDAI_COMMUNITY 24U
 #define SAFETY_STELLANTIS 25U
 #define SAFETY_FAW 26U
-#define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
 #define SAFETY_PROTON 31U
 #define SAFETY_DNGA 32U
@@ -306,18 +294,14 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
   {SAFETY_ELM327, &elm327_hooks},
-  {SAFETY_GM, &gm_hooks},
   {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
   {SAFETY_HYUNDAI, &hyundai_hooks},
-  {SAFETY_CHRYSLER, &chrysler_hooks},
   {SAFETY_SUBARU, &subaru_hooks},
   {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
   {SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   {SAFETY_MAZDA, &mazda_hooks},
-  {SAFETY_BODY, &body_hooks},
-  {SAFETY_FORD, &ford_hooks},
   {SAFETY_PROTON, &proton_hooks},
   {SAFETY_DNGA, &dnga_hooks},
   {SAFETY_BYD, &byd_hooks},
@@ -325,7 +309,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
-  {SAFETY_TESLA, &tesla_hooks},
   {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},

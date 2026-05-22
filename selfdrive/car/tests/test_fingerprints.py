@@ -6,10 +6,7 @@ from openpilot.common.basedir import BASEDIR
 
 # messages reserved for CAN based ignition (see can_ignition_hook function in panda/board/drivers/can)
 # (addr, len)
-CAN_IGNITION_MSGS = {
-  'gm': [(0x1F1, 8), (0x160, 5)],
-  #'tesla' : [(0x348, 8)],
-}
+CAN_IGNITION_MSGS = {}
 
 def _get_fingerprints():
   # read all the folders in selfdrive/car and return a dict where:

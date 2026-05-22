@@ -113,13 +113,9 @@ class CarHarness(EnumBase):
   hyundai_r = BaseCarHarness("Hyundai R connector")
   custom = BaseCarHarness("Developer connector")
   obd_ii = BaseCarHarness("OBD-II connector", parts=[Cable.long_obdc_cable, Cable.long_obdc_cable], has_connector=False)
-  gm = BaseCarHarness("GM connector", parts=[Accessory.harness_box])
   nissan_a = BaseCarHarness("Nissan A connector", parts=[Accessory.harness_box, Cable.rj45_cable_7ft, Cable.long_obdc_cable, Cable.usbc_coupler])
   nissan_b = BaseCarHarness("Nissan B connector", parts=[Accessory.harness_box, Cable.rj45_cable_7ft, Cable.long_obdc_cable, Cable.usbc_coupler])
   mazda = BaseCarHarness("Mazda connector")
-  ford_q3 = BaseCarHarness("Ford Q3 connector")
-  ford_q4 = BaseCarHarness("Ford Q4 connector", parts=[Accessory.harness_box, Accessory.comma_power_v2, Cable.rj45_cable_7ft, Cable.long_obdc_cable,
-                                                       Cable.usbc_coupler])
 
 
 class Device(EnumBase):
@@ -346,10 +342,7 @@ class CarInfo:
       return sentence_builder.format(car_model=f"{self.make} {self.model}", alc=alc, acc=acc)
 
     else:
-      if CP.carFingerprint == "COMMA BODY":
-        return "The body is a robotics dev kit that can run openpilot. <a href='https://www.commabody.com'>Learn more.</a>"
-      else:
-        raise Exception(f"This notCar does not have a detail sentence: {CP.carFingerprint}")
+      raise Exception(f"This notCar does not have a detail sentence: {CP.carFingerprint}")
 
   def get_column(self, column: Column, star_icon: str, video_icon: str, footnote_tag: str) -> str:
     item: str | Star = self.row[column]

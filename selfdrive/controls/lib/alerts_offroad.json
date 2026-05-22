@@ -34,11 +34,7 @@
     "severity": 1
   },
   "Offroad_StorageMissing": {
-    "text": "NVMe drive not mounted.",
-    "severity": 1
-  },
-  "Offroad_BadNvme": {
-    "text": "Unsupported NVMe drive detected. Device may draw significantly more power and overheat due to the unsupported NVMe.",
+    "text": "Micro SD card not mounted.",
     "severity": 1
   },
   "Offroad_CarUnrecognized": {

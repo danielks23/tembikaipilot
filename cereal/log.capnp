@@ -54,8 +54,6 @@ struct InitData {
     neo @1;
     chffrAndroid @2;
     chffrIos @3;
-    tici @4;
-    pc @5;
     tizi @6;
     mici @7;
     ka2 @8;
