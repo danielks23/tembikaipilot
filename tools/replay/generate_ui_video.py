@@ -9,7 +9,7 @@ import pygame
 
 import cereal.messaging as messaging
 from openpilot.common.basedir import BASEDIR
-from openpilot.common.transformations.camera import tici_fcam_intrinsics
+from openpilot.common.transformations.camera import ka2_fcam_intrinsics
 from openpilot.tools.replay.lib.ui_helpers import (UP,
                                          BLACK, GREEN,
                                          YELLOW, Calibration,
@@ -289,7 +289,7 @@ def ui_thread(addr):
     if sm.updated['liveCalibration']:
       rpyCalib = np.asarray(sm['liveCalibration'].rpyCalib)
       calib_scale = 1.0
-      calibration = Calibration(img.shape[0] * img.shape[1], rpyCalib, tici_fcam_intrinsics, calib_scale)
+      calibration = Calibration(img.shape[0] * img.shape[1], rpyCalib, ka2_fcam_intrinsics, calib_scale)
 
     overlay_frame = update_overlay_frame(img, top_down, wide_img)
 

@@ -341,7 +341,7 @@ void WifiManager::activateModemConnection(const QDBusObjectPath &path) {
   }
 }
 
-// function matches tici/hardware.py
+// function matches ka2/hardware.py
 NetworkType WifiManager::currentNetworkType() {
   auto primary_conn = call<QDBusObjectPath>(NM_DBUS_PATH, NM_DBUS_INTERFACE_PROPERTIES, "Get", NM_DBUS_INTERFACE, "PrimaryConnection");
   auto primary_type = call<QString>(primary_conn.path(), NM_DBUS_INTERFACE_PROPERTIES, "Get", NM_DBUS_INTERFACE_ACTIVE_CONNECTION, "Type");

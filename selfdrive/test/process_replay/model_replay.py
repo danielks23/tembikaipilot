@@ -7,11 +7,11 @@ from typing import Any
 
 import cereal.messaging as messaging
 from openpilot.common.params import Params
-from openpilot.system.hardware import PC
 from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.tools.lib.openpilotci import BASE_URL, get_url
 from openpilot.selfdrive.test.process_replay.compare_logs import compare_logs, format_diff
 from openpilot.selfdrive.test.process_replay.process_replay import get_process_config, replay_process
+from openpilot.system.hardware import PC
 from openpilot.system.version import get_commit
 from openpilot.tools.lib.framereader import FrameReader
 from openpilot.tools.lib.logreader import LogReader
@@ -19,7 +19,7 @@ from openpilot.tools.lib.helpers import save_log
 
 TEST_ROUTE = "2f4452b03ccb98f0|2022-12-03--13-45-30"
 SEGMENT = 6
-MAX_FRAMES = 100 if PC else 600
+MAX_FRAMES = 600
 NAV_FRAMES = 50
 
 NO_NAV = "NO_NAV" in os.environ
@@ -28,7 +28,7 @@ SEND_EXTRA_INPUTS = bool(int(os.getenv("SEND_EXTRA_INPUTS", "0")))
 
 
 def get_log_fn(ref_commit, test_route):
-  return f"{test_route}_model_tici_{ref_commit}.bz2"
+  return f"{test_route}_model_{ref_commit}.bz2"
 
 
 def trim_logs_to_max_frames(logs, max_frames, frs_types, include_all_types):

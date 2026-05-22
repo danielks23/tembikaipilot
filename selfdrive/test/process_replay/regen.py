@@ -37,7 +37,7 @@ class DummyFrameReader(BaseFrameReader):
 
   @staticmethod
   def zero_dcamera():
-    return DummyFrameReader(*DRIVER_FRAME_SIZES["tici"], 1200, 0)
+    return DummyFrameReader(*DRIVER_FRAME_SIZES["ka2"], 1200, 0)
 
 
 def regen_segment(

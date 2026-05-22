@@ -9,7 +9,7 @@ import pygame
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from openpilot.common.transformations.camera import (eon_f_frame_size, eon_f_focal_length,
-                                           tici_f_frame_size, tici_f_focal_length,
+                                           ka2_f_frame_size, ka2_f_focal_length,
                                            get_view_frame_from_calib_frame)
 from openpilot.selfdrive.controls.radard import RADAR_TO_CAMERA
 
@@ -39,12 +39,12 @@ _FULL_FRAME_TO_BB = {}
 _INTRINSICS = {}
 
 eon_f_qcam_frame_size = (480, 360)
-tici_f_qcam_frame_size = (528, 330)
+ka2_f_qcam_frame_size = (528, 330)
 
 cams = [(eon_f_frame_size, eon_f_focal_length, eon_f_frame_size),
-        (tici_f_frame_size, tici_f_focal_length, tici_f_frame_size),
+        (ka2_f_frame_size, ka2_f_focal_length, ka2_f_frame_size),
         (eon_f_qcam_frame_size, eon_f_focal_length, eon_f_frame_size),
-        (tici_f_qcam_frame_size, tici_f_focal_length, tici_f_frame_size)]
+        (ka2_f_qcam_frame_size, ka2_f_focal_length, ka2_f_frame_size)]
 for size, focal, full_size in cams:
   sz = size[0] * size[1]
   _BB_SCALE = size[0] / 640.

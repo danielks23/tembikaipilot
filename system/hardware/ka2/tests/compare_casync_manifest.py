@@ -7,7 +7,7 @@ import os
 import requests
 from tqdm import tqdm
 
-import openpilot.system.hardware.tici.casync as casync
+import openpilot.system.hardware.ka2.casync as casync
 
 
 def get_chunk_download_size(chunk):

@@ -10,13 +10,13 @@ from openpilot.common.params import Params
 from openpilot.common.timeout import Timeout
 from openpilot.selfdrive.athena import athenad
 from openpilot.selfdrive.manager.helpers import write_onroad_params
-from openpilot.system.hardware import TICI
+from openpilot.system.hardware import KA2
 
 TIMEOUT_TOLERANCE = 20  # seconds
 
 
 def wifi_radio(on: bool) -> None:
-  if not TICI:
+  if not KA2:
     return
   print(f"wifi {'on' if on else 'off'}")
   subprocess.run(["nmcli", "radio", "wifi", "on" if on else "off"], check=True)
@@ -91,12 +91,12 @@ class TestAthenadPing(unittest.TestCase):
         time.sleep(0.1)
       print("ping received")
 
-  @unittest.skipIf(not TICI, "only run on desk")
+  @unittest.skipIf(not KA2, "only run on KA2")
   def test_offroad(self) -> None:
     write_onroad_params(False, self.params)
     self.assertTimeout(60 + TIMEOUT_TOLERANCE)  # based using TCP keepalive settings
 
-  @unittest.skipIf(not TICI, "only run on desk")
+  @unittest.skipIf(not KA2, "only run on KA2")
   def test_onroad(self) -> None:
     write_onroad_params(True, self.params)
     self.assertTimeout(21 + TIMEOUT_TOLERANCE)

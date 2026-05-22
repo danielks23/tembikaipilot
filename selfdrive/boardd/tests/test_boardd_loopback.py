@@ -13,7 +13,7 @@ from openpilot.common.params import Params
 from openpilot.common.timeout import Timeout
 from openpilot.selfdrive.boardd.boardd import can_list_to_can_capnp
 from openpilot.selfdrive.car import make_can_msg
-from openpilot.system.hardware import TICI
+from openpilot.system.hardware import KA2
 from openpilot.selfdrive.test.helpers import phone_only, with_processes
 
 
@@ -37,7 +37,7 @@ class TestBoardd(unittest.TestCase):
         sm.update(1000)
 
     num_pandas = len(sm['pandaStates'])
-    expected_pandas = 2 if TICI and "SINGLE_PANDA" not in os.environ else 1
+    expected_pandas = 2 if KA2 and "SINGLE_PANDA" not in os.environ else 1
     self.assertEqual(num_pandas, expected_pandas, "connected pandas ({num_pandas}) doesn't match expected panda count ({expected_pandas}). \
                                                    connect another panda for multipanda tests.")
 

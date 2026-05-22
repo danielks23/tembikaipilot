@@ -117,7 +117,7 @@ bool Route::loadFromKommuFallback() {
 
 bool Route::loadFromServer() {
   QEventLoop loop;
-  HttpRequest http(nullptr, !Hardware::PC());
+  HttpRequest http(nullptr, true);
   QObject::connect(&http, &HttpRequest::requestDone, [&](const QString &json, bool success, QNetworkReply::NetworkError error) {
     if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::AuthenticationRequiredError) {
       qWarning() << ">>  Unauthorized. Authenticate with tools/lib/auth.py  <<";

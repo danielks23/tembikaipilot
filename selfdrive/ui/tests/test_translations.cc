@@ -40,7 +40,7 @@ TEST_CASE("UI: test all strings wrapped") {
   Params().remove("LanguageSetting");
   Params().remove("HardwareSerial");
   Params().remove("DongleId");
-  qputenv("TICI", "1");
+  qputenv("KA2", "1");
 
   MainWindow w;
   checkWidgetTrWrap<QPushButton*>(w);

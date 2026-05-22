@@ -5,16 +5,16 @@ import unittest
 import subprocess
 
 from panda import Panda
-from openpilot.system.hardware import TICI, HARDWARE
-from openpilot.system.hardware.tici.hardware import Tici
-from openpilot.system.hardware.tici.amplifier import Amplifier
+from openpilot.system.hardware import KA2, HARDWARE
+from openpilot.system.hardware.ka2.hardware import Ka2
+from openpilot.system.hardware.ka2.amplifier import Amplifier
 
 
 class TestAmplifier(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
-    if not TICI:
+    if not KA2:
       raise unittest.SkipTest
 
   def setUp(self):
@@ -40,7 +40,7 @@ class TestAmplifier(unittest.TestCase):
 
   def test_init(self):
     amp = Amplifier(debug=True)
-    r = amp.initialize_configuration(Tici().get_device_type())
+    r = amp.initialize_configuration(Ka2().get_device_type())
     assert r
     assert self._check_for_i2c_errors(False)
 
@@ -62,7 +62,7 @@ class TestAmplifier(unittest.TestCase):
       time.sleep(random.randint(0, 5))
 
       amp = Amplifier(debug=True)
-      r = amp.initialize_configuration(Tici().get_device_type())
+      r = amp.initialize_configuration(Ka2().get_device_type())
       assert r
 
       if self._check_for_i2c_errors(True):

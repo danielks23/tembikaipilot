@@ -4,12 +4,12 @@ import time
 import unittest
 import numpy as np
 
-from openpilot.system.hardware.tici.hardware import Tici
+from openpilot.system.hardware.ka2.hardware import Ka2
 
-HARDWARE = Tici()
+HARDWARE = Ka2()
 
 
-@pytest.mark.tici
+@pytest.mark.ka2
 class TestHardware(unittest.TestCase):
 
   def test_power_save_time(self):

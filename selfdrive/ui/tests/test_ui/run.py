@@ -18,7 +18,7 @@ from cereal.messaging import SubMaster, PubMaster
 from openpilot.common.mock import mock_messages
 from openpilot.common.params import Params
 from openpilot.common.realtime import DT_MDL
-from openpilot.common.transformations.camera import tici_f_frame_size
+from openpilot.common.transformations.camera import ka2_f_frame_size
 from openpilot.selfdrive.test.helpers import with_processes
 from openpilot.selfdrive.test.process_replay.vision_meta import meta_from_camera_state
 from openpilot.tools.webcam.camera import Camera
@@ -70,14 +70,14 @@ def setup_onroad(click, pm: PubMaster):
   pm.send("pandaStates", dat)
 
   server = VisionIpcServer("camerad")
-  server.create_buffers(VisionStreamType.VISION_STREAM_ROAD, 40, False, *tici_f_frame_size)
-  server.create_buffers(VisionStreamType.VISION_STREAM_DRIVER, 40, False, *tici_f_frame_size)
-  server.create_buffers(VisionStreamType.VISION_STREAM_WIDE_ROAD, 40, False, *tici_f_frame_size)
+  server.create_buffers(VisionStreamType.VISION_STREAM_ROAD, 40, False, *ka2_f_frame_size)
+  server.create_buffers(VisionStreamType.VISION_STREAM_DRIVER, 40, False, *ka2_f_frame_size)
+  server.create_buffers(VisionStreamType.VISION_STREAM_WIDE_ROAD, 40, False, *ka2_f_frame_size)
   server.start_listener()
 
   time.sleep(0.5) # give time for vipc server to start
 
-  IMG = Camera.bgr2nv12(np.random.randint(0, 255, (*tici_f_frame_size,3), dtype=np.uint8))
+  IMG = Camera.bgr2nv12(np.random.randint(0, 255, (*ka2_f_frame_size,3), dtype=np.uint8))
   IMG_BYTES = IMG.flatten().tobytes()
 
   cams = ('roadCameraState', 'wideRoadCameraState')

@@ -6,7 +6,7 @@ import random
 
 from openpilot.common.prefix import OpenpilotPrefix
 from openpilot.selfdrive.manager import manager
-from openpilot.system.hardware import TICI, HARDWARE
+from openpilot.system.hardware import KA2, HARDWARE
 
 
 def pytest_sessionstart(session):
@@ -65,7 +65,7 @@ def openpilot_class_fixture():
 
 
 @pytest.fixture(scope="function")
-def tici_setup_fixture(openpilot_function_fixture):
+def ka2_setup_fixture(openpilot_function_fixture):
   """Ensure a consistent state for tests on-device. Needs the openpilot function fixture to run first."""
   HARDWARE.initialize_hardware()
   HARDWARE.set_power_save(False)
@@ -74,13 +74,13 @@ def tici_setup_fixture(openpilot_function_fixture):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
-  skipper = pytest.mark.skip(reason="Skipping tici test on PC")
+  skipper = pytest.mark.skip(reason="Skipping ka2 test on PC")
   for item in items:
-    if "tici" in item.keywords:
-      if not TICI:
+    if "ka2" in item.keywords:
+      if not KA2:
         item.add_marker(skipper)
       else:
-        item.fixturenames.append('tici_setup_fixture')
+        item.fixturenames.append('ka2_setup_fixture')
 
     if "xdist_group_class_property" in item.keywords:
       class_property_name = item.get_closest_marker('xdist_group_class_property').args[0]

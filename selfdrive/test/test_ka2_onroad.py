@@ -64,15 +64,6 @@ PROCS = {
 }
 
 PROCS.update({
-  "tici": {
-    "./boardd": 4.0,
-    "./ubloxd": 0.02,
-    "system.sensord.pigeond": 6.0,
-  },
-  "tizi": {
-    "./boardd": 19.0,
-    "system.qcomgpsd.qcomgpsd": 1.0,
-  },
   "ka2": {
     "./boardd": 2.0,
     "selfdrive.streamdatad.streamdatad": 2.5,

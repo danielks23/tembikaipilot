@@ -62,11 +62,6 @@ PROCS = {
 }
 
 PROCS.update({
-  "tici": {
-    "./boardd": 4.0,
-    "./ubloxd": 0.02,
-    "system.sensord.pigeond": 6.0,
-  },
   "tizi": {
      "./boardd": 19.0,
     "system.qcomgpsd.qcomgpsd": 1.0,
@@ -98,7 +93,7 @@ def cputime_total(ct):
   return ct.cpuUser + ct.cpuSystem + ct.cpuChildrenUser + ct.cpuChildrenSystem
 
 
-@pytest.mark.tici
+@pytest.mark.ka2
 class TestOnroad(unittest.TestCase):
 
   @classmethod
@@ -149,7 +144,8 @@ class TestOnroad(unittest.TestCase):
       cls.segments = cls.segments[:-1]
 
     finally:
-      cls.gpu_procs = {psutil.Process(int(f.name)).name() for f in pathlib.Path('/sys/devices/virtual/kgsl/kgsl/proc/').iterdir() if f.is_dir()}
+      kgsl_path = pathlib.Path('/sys/devices/virtual/kgsl/kgsl/proc/')
+      cls.gpu_procs = {psutil.Process(int(f.name)).name() for f in kgsl_path.iterdir() if f.is_dir()} if kgsl_path.exists() else set()
 
       if proc is not None:
         proc.terminate()

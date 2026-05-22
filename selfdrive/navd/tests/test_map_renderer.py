@@ -184,7 +184,7 @@ class TestMapRenderer(unittest.TestCase):
     self._run_test(True, LOCATION2_REPEATED)
 
   @with_processes(["mapsd"])
-  @pytest.mark.tici
+  @pytest.mark.ka2
   def test_render_time_distribution(self):
     self._setup_test()
     # from location1 -> location2 and back

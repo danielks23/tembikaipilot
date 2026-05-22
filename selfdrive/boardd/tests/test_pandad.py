@@ -10,12 +10,12 @@ from openpilot.common.gpio import gpio_set, gpio_init
 from panda import Panda, PandaDFU, PandaProtocolMismatch
 from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.system.hardware import HARDWARE
-from openpilot.system.hardware.tici.pins import GPIO
+from openpilot.system.hardware.ka2.pins import GPIO
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 
 
-@pytest.mark.tici
+@pytest.mark.ka2
 class TestPandad(unittest.TestCase):
 
   def setUp(self):
@@ -95,7 +95,7 @@ class TestPandad(unittest.TestCase):
     self._run_test(8)
 
   def test_protocol_version_check(self):
-    if HARDWARE.get_device_type() == 'tici':
+    if HARDWARE.get_device_type() == 'ka2':
       raise unittest.SkipTest("SPI test")
     # flash old fw
     fn = os.path.join(HERE, "bootstub.panda_h7_spiv0.bin")

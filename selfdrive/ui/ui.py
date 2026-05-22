@@ -68,7 +68,6 @@ if __name__ == "__main__":
       alert2.setText("offroad")
 
     HARDWARE.set_screen_brightness(100 if onroad else 40)
-    os.system("echo 0 > /sys/class/backlight/panel0-backlight/bl_power")
 
   timer = QTimer()
   timer.timeout.connect(update)

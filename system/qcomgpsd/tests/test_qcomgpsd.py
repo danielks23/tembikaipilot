@@ -14,7 +14,7 @@ from openpilot.selfdrive.manager.process_config import managed_processes
 GOOD_SIGNAL = bool(int(os.getenv("GOOD_SIGNAL", '0')))
 
 
-@pytest.mark.tici
+@pytest.mark.ka2
 class TestRawgpsd(unittest.TestCase):
   @classmethod
   def setUpClass(cls):

@@ -6,7 +6,7 @@ import numpy as np
 
 import pyopencl as cl  # install with `PYOPENCL_CL_PRETEND_VERSION=2.0 pip install pyopencl`
 
-from openpilot.system.hardware import PC, TICI
+from openpilot.system.hardware import KA2, PC
 from openpilot.common.basedir import BASEDIR
 from openpilot.tools.lib.openpilotci import BASE_URL
 from openpilot.system.version import get_commit
@@ -25,8 +25,8 @@ UV_HEIGHT = FRAME_HEIGHT // 2
 UV_SIZE = UV_WIDTH * UV_HEIGHT
 
 
-def get_frame_fn(ref_commit, test_route, tici=True):
-  return f"{test_route}_debayer{'_tici' if tici else ''}_{ref_commit}.bz2"
+def get_frame_fn(ref_commit, test_route, ka2=True):
+  return f"{test_route}_debayer{'_ka2' if ka2 else ''}_{ref_commit}.bz2"
 
 
 def bzip_frames(frames):
@@ -78,7 +78,7 @@ def debayer_frame(ctx, debayer_prg, data, rgb=False):
   cam_g = cl.Buffer(ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data)
   yuv_g = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, FRAME_WIDTH * FRAME_HEIGHT + UV_SIZE * 2)
 
-  local_worksize = (20, 20) if TICI else (4, 4)
+  local_worksize = (20, 20) if KA2 else (4, 4)
   ev1 = debayer_prg.debayer10(q, (UV_WIDTH, UV_HEIGHT), local_worksize, cam_g, yuv_g)
   cl.enqueue_copy(q, yuv_buff, yuv_g, wait_for=[ev1]).wait()
   cl.enqueue_barrier(q)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
   if not update:
     with open(ref_commit_fn) as f:
       ref_commit = f.read().strip()
-    frame_fn = get_frame_fn(ref_commit, TEST_ROUTE, tici=TICI)
+    frame_fn = get_frame_fn(ref_commit, TEST_ROUTE, ka2=KA2)
 
     try:
       cmp_frames = unbzip_frames(BASE_URL + frame_fn)
@@ -170,7 +170,7 @@ if __name__ == "__main__":
       failed = True
 
   # upload new refs
-  if update or (failed and TICI):
+  if update or (failed and KA2):
     from openpilot.tools.lib.openpilotci import upload_file
 
     print("Uploading new refs")
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     frames_bzip = bzip_frames(frames)
 
     new_commit = get_commit()
-    frame_fn = os.path.join(replay_dir, get_frame_fn(new_commit, TEST_ROUTE, tici=TICI))
+    frame_fn = os.path.join(replay_dir, get_frame_fn(new_commit, TEST_ROUTE, ka2=KA2))
     with open(frame_fn, "wb") as f2:
       f2.write(frames_bzip)
 

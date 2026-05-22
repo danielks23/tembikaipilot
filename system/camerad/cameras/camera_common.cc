@@ -11,8 +11,6 @@
 #include "common/clutil.h"
 #include "common/swaglog.h"
 #include "common/util.h"
-#include "third_party/linux/include/msm_media_info.h"
-
 #include "system/camerad/cameras/camera_rk.h"
 #ifdef QCOM2
 #include "CL/cl_ext_qcom.h"

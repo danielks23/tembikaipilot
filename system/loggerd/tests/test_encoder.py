@@ -14,7 +14,7 @@ from tqdm import trange
 
 from openpilot.common.params import Params
 from openpilot.common.timeout import Timeout
-from openpilot.system.hardware import TICI
+from openpilot.system.hardware import KA2
 from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.tools.lib.logreader import LogReader
 from openpilot.system.hardware.hw import Paths
@@ -32,7 +32,7 @@ CAMERAS = [
 FILE_SIZE_TOLERANCE = 0.5
 
 
-@pytest.mark.tici # TODO: all of loggerd should work on PC
+@pytest.mark.ka2 # TODO: all of loggerd should work on PC
 class TestEncoder(unittest.TestCase):
 
   def setUp(self):
@@ -90,7 +90,7 @@ class TestEncoder(unittest.TestCase):
         # TODO: this ffprobe call is really slow
         # check frame count
         cmd = f"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 {file_path}"
-        if TICI:
+        if KA2:
           cmd = "LD_LIBRARY_PATH=/usr/local/lib " + cmd
 
         expected_frames = fps * SEGMENT_LENGTH
@@ -133,7 +133,7 @@ class TestEncoder(unittest.TestCase):
 
       self.assertEqual(1, len(set(first_frames)))
 
-      if TICI:
+      if KA2:
         expected_frames = fps * SEGMENT_LENGTH
         self.assertEqual(min(counts), expected_frames)
       shutil.rmtree(f"{route_prefix_path}--{i}")

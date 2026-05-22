@@ -20,10 +20,8 @@ QMapLibre::Settings get_mapbox_settings() {
   QMapLibre::Settings settings;
   settings.setProviderTemplate(QMapLibre::Settings::ProviderTemplate::MapboxProvider);
 
-  if (!Hardware::PC()) {
-    settings.setCacheDatabasePath(MAPS_CACHE_PATH);
-    settings.setCacheDatabaseMaximumSize(100 * 1024 * 1024);
-  }
+  settings.setCacheDatabasePath(MAPS_CACHE_PATH);
+  settings.setCacheDatabaseMaximumSize(100 * 1024 * 1024);
   settings.setApiBaseUrl(MAPS_HOST);
   settings.setApiKey(get_mapbox_token());
 

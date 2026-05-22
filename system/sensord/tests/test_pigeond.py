@@ -8,11 +8,11 @@ from cereal.services import SERVICE_LIST
 from openpilot.common.gpio import gpio_read
 from openpilot.selfdrive.test.helpers import with_processes
 from openpilot.selfdrive.manager.process_config import managed_processes
-from openpilot.system.hardware.tici.pins import GPIO
+from openpilot.system.hardware.ka2.pins import GPIO
 
 
 # TODO: test TTFF when we have good A-GNSS
-@pytest.mark.tici
+@pytest.mark.ka2
 class TestPigeond(unittest.TestCase):
 
   def tearDown(self):

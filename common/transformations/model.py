@@ -3,7 +3,7 @@ import numpy as np
 from openpilot.common.transformations.orientation import rot_from_euler
 from openpilot.common.transformations.camera import (
   FULL_FRAME_SIZE, get_view_frame_from_calib_frame, view_frame_from_device_frame,
-  eon_fcam_intrinsics, tici_ecam_intrinsics, tici_fcam_intrinsics)
+  eon_fcam_intrinsics, ka2_ecam_intrinsics, ka2_fcam_intrinsics)
 
 # segnet
 SEGNET_SIZE = (512, 384)
@@ -63,11 +63,11 @@ calib_from_medmodel = np.linalg.inv(medmodel_frame_from_calib_frame[:, :3])
 calib_from_sbigmodel = np.linalg.inv(sbigmodel_frame_from_calib_frame[:, :3])
 
 # This function is verified to give similar results to xx.uncommon.utils.transform_img
-def get_warp_matrix(device_from_calib_euler: np.ndarray, wide_camera: bool = False, bigmodel_frame: bool = False, tici: bool = True) -> np.ndarray:
-  if tici and wide_camera:
-    cam_intrinsics = tici_ecam_intrinsics
-  elif tici:
-    cam_intrinsics = tici_fcam_intrinsics
+def get_warp_matrix(device_from_calib_euler: np.ndarray, wide_camera: bool = False, bigmodel_frame: bool = False, ka2: bool = True) -> np.ndarray:
+  if ka2 and wide_camera:
+    cam_intrinsics = ka2_ecam_intrinsics
+  elif ka2:
+    cam_intrinsics = ka2_fcam_intrinsics
   else:
     cam_intrinsics = eon_fcam_intrinsics
 
