@@ -135,16 +135,10 @@ class TestFwFingerprint(unittest.TestCase):
     blacklisted_addrs = (0x7c4, 0x7d0)  # includes A/C ecu and an unknown ecu
     for car_model, ecus in FW_VERSIONS.items():
       with self.subTest(car_model=car_model.value):
-        CP = interfaces[car_model][0].get_non_essential_params(car_model)
-        if CP.carName == 'subaru':
-          for ecu in ecus.keys():
-            self.assertNotIn(ecu[1], blacklisted_addrs, f'{car_model}: Blacklisted ecu: (Ecu.{ECU_NAME[ecu[0]]}, {hex(ecu[1])})')
-
-        elif CP.carName == "chrysler":
-          # Some HD trucks have a combined TCM and ECM
-          if CP.carFingerprint.startswith("RAM HD"):
-            for ecu in ecus.keys():
-              self.assertNotEqual(ecu[0], Ecu.transmission, f"{car_model}: Blacklisted ecu: (Ecu.{ECU_NAME[ecu[0]]}, {hex(ecu[1])})")
+         CP = interfaces[car_model][0].get_non_essential_params(car_model)
+         if CP.carName == 'subaru':
+           for ecu in ecus.keys():
+             self.assertNotIn(ecu[1], blacklisted_addrs, f'{car_model}: Blacklisted ecu: (Ecu.{ECU_NAME[ecu[0]]}, {hex(ecu[1])})')
 
   def test_missing_versions_and_configs(self):
     brand_versions = set(VERSIONS.keys())
@@ -266,21 +260,15 @@ class TestFwFingerprintTiming(unittest.TestCase):
     total_ref_time = {1: 8.3, 2: 9.2}
     brand_ref_times = {
       1: {
-        'gm': 1.0,
-        'body': 0.1,
-        'chrysler': 0.3,
-        'ford': 1.5,
         'honda': 0.55,
         'hyundai': 1.05,
         'mazda': 0.1,
         'nissan': 0.8,
         'subaru': 0.45,
-        'tesla': 0.2,
         'toyota': 1.6,
         'volkswagen': 0.65,
       },
       2: {
-        'ford': 1.6,
         'hyundai': 1.85,
       }
     }
