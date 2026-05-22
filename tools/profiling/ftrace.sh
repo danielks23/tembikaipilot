@@ -10,8 +10,7 @@ echo 1000 > buffer_size_kb
 # /sys/kernel/tracing/available_events
 echo 1 > events/irq/enable
 echo 1 > events/sched/enable
-echo 1 > events/kgsl/enable
-echo 1 > events/camera/enable
+
 echo 1 > events/workqueue/enable
 
 echo > trace

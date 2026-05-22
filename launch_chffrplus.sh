@@ -15,19 +15,14 @@ function agnos_init {
   # set success flag for current boot slot
   sudo abctl --set_success
 
-  # TODO: do this without udev in AGNOS
-  # udev does this, but sometimes we startup faster
-  sudo chgrp gpu /dev/adsprpc-smd /dev/ion /dev/kgsl-3d0
-  sudo chmod 660 /dev/adsprpc-smd /dev/ion /dev/kgsl-3d0
-
   # Check if AGNOS update is required
   if [ $(< /VERSION) != "$AGNOS_VERSION" ]; then
-    AGNOS_PY="$DIR/system/hardware/tici/agnos.py"
-    MANIFEST="$DIR/system/hardware/tici/agnos.json"
+    AGNOS_PY="$DIR/system/hardware/ka2/agnos.py"
+    MANIFEST="$DIR/system/hardware/ka2/agnos.json"
     if $AGNOS_PY --verify $MANIFEST; then
       sudo reboot
     fi
-    $DIR/system/hardware/tici/updater $AGNOS_PY $MANIFEST
+    $DIR/system/hardware/ka2/updater $AGNOS_PY $MANIFEST
   fi
 }
 
