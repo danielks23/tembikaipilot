@@ -9,7 +9,6 @@ import cereal.messaging as messaging
 from cereal.visionipc import VisionIpcClient, VisionStreamType
 from openpilot.common.params import Params
 from openpilot.common.realtime import DT_MDL
-from openpilot.system.hardware import PC
 from openpilot.selfdrive.controls.lib.alertmanager import set_offroad_alert
 from openpilot.selfdrive.manager.process_config import managed_processes
 
@@ -96,9 +95,7 @@ def snapshot():
     pass
 
   try:
-    # Allow testing on replay on PC
-    if not PC:
-      managed_processes['camerad'].start()
+    managed_processes['camerad'].start()
 
     frame = "wideRoadCameraState"
     front_frame = "driverCameraState" if front_camera_allowed else None

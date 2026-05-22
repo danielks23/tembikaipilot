@@ -5,7 +5,7 @@ from openpilot.common.numpy_fast import interp
 from openpilot.common.realtime import DT_DMON
 from openpilot.common.filter_simple import FirstOrderFilter
 from openpilot.common.stat_live import RunningStatFilter
-from openpilot.common.transformations.camera import tici_d_frame_size
+from openpilot.common.transformations.camera import ka2_d_frame_size
 from openpilot.common.features import Features
 
 IGNORE_DM = Features().has("ignore-dm")
@@ -76,7 +76,7 @@ class DRIVER_MONITOR_SETTINGS():
 
 # model output refers to center of undistorted+leveled image
 EFL = 598.0 # focal length in K
-W, H = tici_d_frame_size # corrected image has same size as raw
+W, H = ka2_d_frame_size # corrected image has same size as raw
 
 class DistractedType:
   NOT_DISTRACTED = 0

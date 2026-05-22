@@ -12,8 +12,6 @@
 
 #include <CL/cl.h>
 
-#include "third_party/linux/include/msm_kgsl.h"
-
 using namespace std;
 
 cl_int thneed_clSetKernelArg(cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void *arg_value);
@@ -75,19 +73,6 @@ class CachedSync: public CachedIoctl {
     string data;
 };
 
-class CachedCommand: public CachedIoctl {
-  public:
-    CachedCommand(Thneed *lthneed, struct kgsl_gpu_command *cmd);
-    void exec();
-  private:
-    void disassemble(int cmd_index);
-    struct kgsl_gpu_command cache;
-    unique_ptr<kgsl_command_object[]> cmds;
-    unique_ptr<kgsl_command_object[]> objs;
-    Thneed *thneed;
-    vector<shared_ptr<CLQueuedKernel> > kq;
-};
-
 class Thneed {
   public:
     Thneed(bool do_clinit=false, cl_context _context = NULL);
@@ -110,11 +95,7 @@ class Thneed {
     int debug;
     int timestamp;
 
-#ifdef QCOM2
-    unique_ptr<GPUMalloc> ram;
-    vector<unique_ptr<CachedIoctl> > cmds;
-    int fd;
-#endif
+
 
     // all CL kernels
     void copy_inputs(float **finputs, bool internal=false);

@@ -8,14 +8,9 @@
 #include "selfdrive/ui/qt/qt_window.h"
 #include "selfdrive/ui/qt/setup/reset.h"
 
-#define NVME "/dev/nvme0n1"
 #define USERDATA "/dev/disk/by-partlabel/userdata"
 
 void Reset::doErase() {
-  // best effort to wipe nvme
-  std::system("sudo umount " NVME);
-  std::system("yes | sudo mkfs.ext4 " NVME);
-
   int rm = std::system("sudo rm -rf /data/*");
   std::system("sudo umount " USERDATA);
   int fmt = std::system("yes | sudo mkfs.ext4 " USERDATA);
