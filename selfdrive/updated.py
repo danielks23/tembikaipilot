@@ -16,7 +16,7 @@ from markdown_it import MarkdownIt
 from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
 from openpilot.common.time import system_time_valid
-from openpilot.system.hardware import AGNOS, KA2, HARDWARE
+from openpilot.system.hardware import KA2, HARDWARE
 from openpilot.common.swaglog import cloudlog
 from openpilot.selfdrive.controls.lib.alertmanager import set_offroad_alert
 from openpilot.system.version import is_tested_branch
@@ -207,10 +207,7 @@ def finalize_update() -> None:
 
 
 def handle_agnos_update() -> None:
-  if HARDWARE.get_device_type() == 'ka2':
-    from openpilot.system.hardware.ka2.agnos import flash_agnos_update, get_target_slot_number, verify_agnos_update, swap
-  else:
-    from openpilot.system.hardware.tici.agnos import flash_agnos_update, get_target_slot_number
+  from openpilot.system.hardware.ka2.agnos import flash_agnos_update, get_target_slot_number, verify_agnos_update, swap
 
   cur_version = HARDWARE.get_os_version()
   updated_version = run(["bash", "-c", r"unset AGNOS_VERSION && source launch_env.sh && \
@@ -226,10 +223,7 @@ def handle_agnos_update() -> None:
   cloudlog.info(f"Beginning background installation for AGNOS {updated_version}")
   set_offroad_alert("Offroad_NeosUpdate", True)
 
-  if HARDWARE.get_device_type() == 'ka2':
-    manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/ka2/agnos.json")
-  else:
-    manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/tici/agnos.json")
+  manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/ka2/agnos.json")
   target_slot_number = get_target_slot_number()
   flash_agnos_update(manifest_path, target_slot_number, cloudlog)
   if HARDWARE.get_device_type() == 'ka2':
@@ -408,7 +402,7 @@ class Updater:
     cloudlog.info("git reset success: %s", '\n'.join(r))
 
     # TODO: show agnos download progress
-    if AGNOS or KA2:
+    if KA2:
       handle_agnos_update()
 
     # Create the finalized, ready-to-swap update

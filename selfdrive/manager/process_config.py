@@ -2,7 +2,7 @@ import os
 
 from cereal import car
 from openpilot.common.params import Params
-from openpilot.system.hardware import PC, TICI, KA2, HARDWARE
+from openpilot.system.hardware import KA2, HARDWARE
 from openpilot.selfdrive.manager.process import PythonProcess, NativeProcess, DaemonProcess
 
 WEBCAM = os.getenv("USE_WEBCAM") is not None
@@ -52,17 +52,17 @@ procs = [
   NativeProcess("proclogd", "system/proclogd", ["./proclogd"], only_onroad),
   PythonProcess("logmessaged", "system.logmessaged", always_run),
   PythonProcess("micd", "system.micd", iscar),
-  PythonProcess("timed", "system.timed", always_run, enabled=not PC),
+  PythonProcess("timed", "system.timed", always_run, enabled=True),
 
-  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=(not PC or WEBCAM)),
+  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=True),
   NativeProcess("encoderd", "system/loggerd", ["./encoderd"], only_onroad),
   NativeProcess("stream_encoderd", "system/loggerd", ["./encoderd", "--stream"], notcar),
   NativeProcess("loggerd", "system/loggerd", ["./loggerd"], logging),
   NativeProcess("modeld", "selfdrive/modeld", ["./modeld"], only_onroad),
   #NativeProcess("mapsd", "selfdrive/navd", ["./mapsd"], only_onroad),
   PythonProcess("navmodeld", "selfdrive.modeld.navmodeld", only_onroad),
-  NativeProcess("sensord", "system/sensord", ["./sensord"], only_onroad, enabled=not PC),
-  # NativeProcess("ui", "selfdrive/ui", ["./ui"], always_run, watchdog_max_dt=(5 if not PC else None)),
+  NativeProcess("sensord", "system/sensord", ["./sensord"], only_onroad, enabled=True),
+  # NativeProcess("ui", "selfdrive/ui", ["./ui"], always_run, watchdog_max_dt=5),
   PythonProcess("soundd", "selfdrive.ui.soundd", only_onroad),
   NativeProcess("locationd", "selfdrive/locationd", ["./locationd"], only_onroad),
   NativeProcess("boardd", "selfdrive/boardd", ["./boardd"], always_run, enabled=False),
@@ -70,19 +70,19 @@ procs = [
   PythonProcess("torqued", "selfdrive.locationd.torqued", only_onroad),
   PythonProcess("controlsd", "selfdrive.controls.controlsd", only_onroad),
   PythonProcess("deleter", "system.loggerd.deleter", always_run),
-  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=(not PC or WEBCAM)),
-  PythonProcess("qcomgpsd", "system.qcomgpsd.qcomgpsd", qcomgps, enabled=TICI or KA2),
+  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=True),
+  PythonProcess("qcomgpsd", "system.qcomgpsd.qcomgpsd", qcomgps, enabled=False),
   PythonProcess("alert_ledd", "system.hardware.ka2.status_led.alert_ledd", always_run, enabled=KA2),
   #PythonProcess("navd", "selfdrive.navd.navd", only_onroad),
   PythonProcess("pandad", "selfdrive.boardd.pandad", always_run),
   PythonProcess("paramsd", "selfdrive.locationd.paramsd", only_onroad),
-  NativeProcess("ubloxd", "system/ubloxd", ["./ubloxd"], ublox, enabled=TICI),
-  PythonProcess("pigeond", "system.sensord.pigeond", ublox, enabled=TICI),
+  NativeProcess("ubloxd", "system/ubloxd", ["./ubloxd"], ublox, enabled=False),
+  PythonProcess("pigeond", "system.sensord.pigeond", ublox, enabled=False),
   PythonProcess("plannerd", "selfdrive.controls.plannerd", only_onroad),
   PythonProcess("radard", "selfdrive.controls.radard", only_onroad),
   PythonProcess("thermald", "selfdrive.thermald.thermald", always_run),
-  PythonProcess("tombstoned", "selfdrive.tombstoned", always_run, enabled=not PC),
-  PythonProcess("updated", "selfdrive.updated", only_offroad, enabled=not PC),
+  PythonProcess("tombstoned", "selfdrive.tombstoned", always_run, enabled=True),
+  PythonProcess("updated", "selfdrive.updated", only_offroad, enabled=True),
   PythonProcess("uploader", "system.loggerd.uploader", always_run),
   PythonProcess("statsd", "selfdrive.statsd", always_run),
 
@@ -92,8 +92,8 @@ procs = [
   PythonProcess("webjoystick", "tools.bodyteleop.web", notcar),
 
   # stream data
-  PythonProcess("streamdatad", "selfdrive.streamdatad.streamdatad", always_run, enabled=not PC),
-  PythonProcess("sdformatterd", "system.hardware.ka2.formatdevice", format_sd, enabled=not PC),
+  PythonProcess("streamdatad", "selfdrive.streamdatad.streamdatad", always_run, enabled=True),
+  PythonProcess("sdformatterd", "system.hardware.ka2.formatdevice", format_sd, enabled=True),
   PythonProcess("setapnd", "system.hardware.ka2.setapn", always_run, enabled=KA2)
 ]
 

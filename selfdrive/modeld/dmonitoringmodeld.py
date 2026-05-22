@@ -23,7 +23,6 @@ MODEL_HEIGHT = 960
 OUTPUT_SIZE = 84
 SEND_RAW_PRED = os.getenv('SEND_RAW_PRED')
 MODEL_PATHS = {
-  ModelRunner.SNPE: Path(__file__).parent / 'models/dmonitoring_model_q.dlc',
   ModelRunner.ONNX: Path(__file__).parent / 'models/dmonitoring_model.onnx',
   ModelRunner.RKNN: Path(__file__).parent / 'models/dmonitoring_model.rknn'}
 

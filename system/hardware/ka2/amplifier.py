@@ -61,7 +61,7 @@ BASE_CONFIG = [
 ]
 
 CONFIGS = {
-  "tici": [
+  "ka2": [
     AmpConfig("Right speaker output from right DAC", 0b1, 0x2C, 0, 0b11111111),
     AmpConfig("Right Speaker Mixer Gain", 0b00, 0x2D, 2, 0b00001100),
     AmpConfig("Right speaker output volume", 0x1c, 0x3E, 0, 0b00011111),

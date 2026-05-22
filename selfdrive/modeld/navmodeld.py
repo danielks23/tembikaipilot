@@ -20,7 +20,6 @@ NAV_FEATURE_LEN = 256
 NAV_DESIRE_LEN = 32
 NAV_OUTPUT_SIZE = 2*2*ModelConstants.IDX_N + NAV_DESIRE_LEN + NAV_FEATURE_LEN
 MODEL_PATHS = {
-  ModelRunner.SNPE: Path(__file__).parent / 'models/navmodel_q.dlc',
   ModelRunner.ONNX: Path(__file__).parent / 'models/navmodel.onnx',
   ModelRunner.RKNN: Path(__file__).parent / 'models/navmodel.rknn'}
 
@@ -82,8 +81,7 @@ def main():
   gc.disable()
   set_realtime_priority(1)
 
-  # there exists a race condition when two processes try to create a
-  # SNPE model runner at the same time, wait for dmonitoringmodeld to finish
+  # wait for dmonitoringmodeld to finish
   cloudlog.warning("waiting for dmonitoringmodeld to initialize")
   if not Params().get_bool("DmModelInitialized", True):
     return

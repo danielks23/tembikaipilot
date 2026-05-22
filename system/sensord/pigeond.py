@@ -11,9 +11,9 @@ from datetime import datetime
 from cereal import messaging
 from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
-from openpilot.system.hardware import TICI
+from openpilot.system.hardware import KA2
 from openpilot.common.gpio import gpio_init, gpio_set
-from openpilot.system.hardware.tici.pins import GPIO
+from openpilot.system.hardware.ka2.pins import GPIO
 
 UBLOX_TTY = "/dev/ttyHS0"
 
@@ -299,7 +299,7 @@ def run_receiving(pigeon: TTYPigeon, pm: messaging.PubMaster, duration: int = 0)
 
 
 def main():
-  assert TICI, "unsupported hardware for pigeond"
+  assert KA2, "unsupported hardware for pigeond"
 
   pigeon, pm = create_pigeon()
   init_baudrate(pigeon)
