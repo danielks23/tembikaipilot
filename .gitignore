@@ -56,6 +56,7 @@ selfdrive/modeld/_navmodeld
 selfdrive/modeld/_dmonitoringmodeld
 /src/
 
+prebuilt
 one
 notebooks
 xx
@@ -134,3 +135,7 @@ opendbc/can/packer_pyx.cpp
 opendbc/can/parser_pyx.cpp
 opendbc/can/packer_pyx.html
 opendbc/can/parser_pyx.html
+
+################## KA2 ##################
+
+KA2 OS folder/
