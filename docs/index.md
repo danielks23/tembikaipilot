@@ -1,17 +1,36 @@
-# openpilot Documentation
+# KommuAssist Documentation
 
-```{include} README.md
+```{toctree}
+:caption: 'Hardware'
+:maxdepth: 2
+
+01-hardware/KA2-Hardware-Reference.md
 ```
 
 ```{toctree}
-:caption: 'General'
-:maxdepth: 4
+:caption: 'Development'
+:maxdepth: 2
 
-CARS.md
-CONTRIBUTING.md
-INTEGRATION.md
-LIMITATIONS.md
-SAFETY.md
+02-development/Development-Workflow.md
+02-development/Contributing-Guide.md
+02-development/Bounties.md
+```
+
+```{toctree}
+:caption: 'Vehicle'
+:maxdepth: 2
+
+03-vehicle/Stock-Features-Integration.md
+03-vehicle/System-Limitations.md
+```
+
+```{toctree}
+:caption: 'Reference'
+:maxdepth: 2
+
+04-reference/Safety-Guidelines.md
+04-reference/Supported-Cars.md
+04-reference/CTF-Guide.md
 ```
 
 ```{toctree}

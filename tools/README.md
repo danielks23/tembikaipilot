@@ -41,7 +41,7 @@ Follow [these instructions](https://docs.microsoft.com/en-us/windows/wsl/install
 **NOTE**: If you are running WSL and any GUIs are failing (segfaulting or other strange issues) even after following the steps above, you may need to enable software rendering with `LIBGL_ALWAYS_SOFTWARE=1`, e.g. `LIBGL_ALWAYS_SOFTWARE=1 selfdrive/ui/ui`.
 
 ## CTF
-Learn about the openpilot ecosystem and tools by playing our [CTF](/tools/CTF.md).
+Learn about the openpilot ecosystem and tools by playing our [CTF](/docs/04-reference/CTF-Guide.md).
 
 ## Directory Structure
 

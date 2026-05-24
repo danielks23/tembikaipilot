@@ -20,7 +20,7 @@ byd, dnga (Perodua), honda, hyundai, mazda, nissan, proton, subaru, toyota, volk
 
 ## Getting Started
 
-See [KA2 Hardware Guide](docs/KA2_HARDWARE_GUIDE.md) for hardware specifications and setup.
+See [KA2 Hardware Reference](docs/01-hardware/KA2-Hardware-Reference.md) for hardware specifications and setup.
 
 ## Developing
 

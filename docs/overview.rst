@@ -60,7 +60,7 @@ tools
 .. toctree::
    :maxdepth: 4
 
-   tools/CTF.md
+   CTF Guide <04-reference/CTF-Guide.md>
    tools/joystick/README.md
    tools/lib/README.md
    tools/plotjuggler/README.md
