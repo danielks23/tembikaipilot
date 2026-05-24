@@ -73,31 +73,6 @@ CONFIGS = {
     *configs_from_eq_params(0xA2, EQParams(0x091F, 0x3D4C, 0xCE11, 0x1266, 0x2807)),
     *configs_from_eq_params(0xAC, EQParams(0x0A9E, 0x3F20, 0xE573, 0x0A8B, 0x3A3B)),
   ],
-  "tizi": [
-    AmpConfig("Left speaker output from left DAC", 0b1, 0x2B, 0, 0b11111111),
-    AmpConfig("Right speaker output from right DAC", 0b1, 0x2C, 0, 0b11111111),
-    AmpConfig("Left Speaker Mixer Gain", 0b00, 0x2D, 0, 0b00000011),
-    AmpConfig("Right Speaker Mixer Gain", 0b00, 0x2D, 2, 0b00001100),
-    AmpConfig("Left speaker output volume", 0x17, 0x3D, 0, 0b00011111),
-    AmpConfig("Right speaker output volume", 0x17, 0x3E, 0, 0b00011111),
-
-    AmpConfig("DAI2 EQ enable", 0b0, 0x49, 1, 0b00000010),
-    AmpConfig("DAI2: DC blocking", 0b0, 0x20, 0, 0b00000001),
-    AmpConfig("ALC enable", 0b0, 0x43, 7, 0b10000000),
-    AmpConfig("DAI2 EQ attenuation", 0x2, 0x32, 0, 0b00001111),
-    AmpConfig("Excursion limiter upper corner freq", 0b001, 0x41, 4, 0b01110000),
-    AmpConfig("Excursion limiter threshold", 0b100, 0x42, 0, 0b00001111),
-    AmpConfig("Distortion limit (THDCLP)", 0x0, 0x46, 4, 0b11110000),
-    AmpConfig("Distortion limiter release time constant", 0b1, 0x46, 0, 0b00000001),
-    AmpConfig("Left DAC input mixer: DAI1 left", 0b0, 0x22, 7, 0b10000000),
-    AmpConfig("Left DAC input mixer: DAI1 right", 0b0, 0x22, 6, 0b01000000),
-    AmpConfig("Left DAC input mixer: DAI2 left", 0b1, 0x22, 5, 0b00100000),
-    AmpConfig("Left DAC input mixer: DAI2 right", 0b0, 0x22, 4, 0b00010000),
-    AmpConfig("Right DAC input mixer: DAI2 left", 0b0, 0x22, 1, 0b00000010),
-    AmpConfig("Right DAC input mixer: DAI2 right", 0b1, 0x22, 0, 0b00000001),
-    AmpConfig("Volume adjustment smoothing disabled", 0b1, 0x49, 6, 0b01000000),
-  ],
-  "mici": [],
 }
 
 class Amplifier:

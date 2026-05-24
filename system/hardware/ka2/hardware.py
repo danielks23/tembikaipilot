@@ -347,10 +347,7 @@ class Ka2(HardwareBase):
     # *** IRQ config ***
     pass
 
-    # boardd core
-    #affine_irq(4, "spi_geni")         # SPI
-    #affine_irq(4, "xhci-hcd:usb3")    # aux panda USB (or potentially anything else on USB)
-    #affine_irq(4, "xhci-hcd:usb1")    # internal panda USB (also modem)
+    # boardd core (TODO: map to RK3588 equivalents)
 
 
   def get_gpu_usage_percent(self):
@@ -378,10 +375,7 @@ class Ka2(HardwareBase):
     # mask off big cluster from default affinity
     sudo_write("f", "/proc/irq/default_smp_affinity")
 
-    # move these off the default core
-    #affine_irq(1, "msm_drm")   # display
-    #affine_irq(1, "msm_vidc")  # encoders
-    #affine_irq(1, "i2c_geni")  # sensors
+    # move these off the default core (TODO: map to RK3588 equivalents)
 
     # setup cpu, ddr and npu governors
     # TODO see if cpu and ddr needed

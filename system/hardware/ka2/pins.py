@@ -7,3 +7,6 @@ class GPIO:
   STM_BOOT0 = 134
 
   SOM_ST_IO = 4   # GPIO4_B2_u / P26
+
+  # EC25-EM GNSS power (integrated in modem, not a separate pin)
+  GNSS_PWR_EN = -1
