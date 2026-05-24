@@ -11,10 +11,10 @@ authors = [
 dependencies = [
   # multiple users
   "sounddevice",  # micd + soundd
-  "pyserial",     # pigeond + qcomgpsd
+  "pyserial",     # pigeond + gpsd
   "requests",     # many one-off uses
   "sympy",        # rednose + friends
-  "crcmod",       # cars + qcomgpsd
+  "crcmod",       # cars + gpsd
   "tqdm",         # cars (fw_versions.py) on start + many one-off uses
 
   # hardwared

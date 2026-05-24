@@ -54,13 +54,7 @@ PROCS = {
   "selfdrive.boardd.pandad": 0,
   "selfdrive.statsd": 0.4,
   "system.loggerd.uploader": (0.03, 1.5),
-  "system.loggerd.deleter": 0.1,
-
-  # deprecated
-  "selfdrive.modeld.navmodeld": 1.0,
-  # "selfdrive.navd.navd": 0.4,
-  # "./mapsd": (0.5, 10.0),
-  # "./ui": 18.0,
+   "system.loggerd.deleter": 0.1,
 }
 
 PROCS.update({
@@ -68,7 +62,7 @@ PROCS.update({
     "./boardd": 2.0,
     "selfdrive.streamdatad.streamdatad": 2.5,
     "system.hardware.ka2.status_led.alert_ledd": 7.5,
-    "system.qcomgpsd.qcomgpsd": 1.0,
+    "system.gpsd.gps": 1.0,
   }
 }.get(HARDWARE.get_device_type(), {}))
 
@@ -88,10 +82,6 @@ TIMINGS = {
   "driverStateV2": [2.5, 0.40],
   "liveLocationKalman": [2.5, 0.35],
   "wideRoadCameraState": [1.5, 0.35],
-
-  # deprecated
-  #  "navModel": [2.5, 0.35],
-  #  "mapRenderState": [2.5, 0.35],
 }
 
 
@@ -189,7 +179,7 @@ class TestOnroad(unittest.TestCase):
       if s in ('initData', 'sentinel'):
         continue
 
-      # skip gps services for now
+      # skip gps services — no GPS hardware on KA2
       if s in ('ubloxGnss', 'ubloxRaw', 'gnssMeasurements', 'gpsLocation', 'gpsLocationExternal', 'qcomGnss'):
         continue
 

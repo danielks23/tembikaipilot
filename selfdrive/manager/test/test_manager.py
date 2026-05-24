@@ -17,7 +17,7 @@ from openpilot.system.hardware import HARDWARE
 os.environ['FAKEUPLOAD'] = "1"
 
 MAX_STARTUP_TIME = 3
-BLACKLIST_PROCS = ['manage_athenad', 'pandad', 'pigeond']
+BLACKLIST_PROCS = ['manage_athenad', 'pandad']
 
 
 @pytest.mark.ka2
@@ -48,7 +48,7 @@ class TestManager(unittest.TestCase):
     t = time.monotonic() - start
     assert t < MAX_STARTUP_TIME, f"startup took {t}s, expected <{MAX_STARTUP_TIME}s"
 
-  @unittest.skip("this test is flaky the way it's currently written, should be moved to test_onroad")
+  @unittest.skip("this test is flaky the way it's currently written")
   def test_clean_exit(self):
     """
       Ensure all processes exit cleanly when stopped.

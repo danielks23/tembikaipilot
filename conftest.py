@@ -69,7 +69,6 @@ def ka2_setup_fixture(openpilot_function_fixture):
   """Ensure a consistent state for tests on-device. Needs the openpilot function fixture to run first."""
   HARDWARE.initialize_hardware()
   HARDWARE.set_power_save(False)
-  os.system("pkill -9 -f athena")
 
 
 @pytest.hookimpl(tryfirst=True)
