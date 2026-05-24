@@ -374,7 +374,6 @@ SConscript(['cereal/SConscript'])
 
 # Build other submodules
 SConscript([
-  'body/board/SConscript',
   'opendbc/can/SConscript',
   'panda/SConscript',
 ])
