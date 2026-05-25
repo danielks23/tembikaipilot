@@ -5,7 +5,7 @@
 class BodyWindow : public QWidget {
   Q_OBJECT
 public:
-  explicit BodyWindow(QWidget* parent = 0) : QWidget(parent) {}
+  explicit BodyWindow(QWidget* parent = 0);
 signals:
   void updateState(const UIState &s);
 };
