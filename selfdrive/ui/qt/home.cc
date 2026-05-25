@@ -35,9 +35,6 @@ HomeWindow::HomeWindow(QWidget* parent) : QWidget(parent) {
   QObject::connect(onroad, &OnroadWindow::mapPanelRequested, this, [=] { sidebar->hide(); });
   slayout->addWidget(onroad);
 
-  body = new BodyWindow(this);
-  slayout->addWidget(body);
-
   driver_view = new DriverViewWindow(this);
   connect(driver_view, &DriverViewWindow::done, [=] {
     showDriverView(false);
@@ -58,17 +55,9 @@ void HomeWindow::showMapPanel(bool show) {
 }
 
 void HomeWindow::updateState(const UIState &s) {
-  const SubMaster &sm = *(s.sm);
-
-  // switch to the generic robot UI
-  if (onroad->isVisible() && !body->isEnabled() && sm["carParams"].getCarParams().getNotCar()) {
-    body->setEnabled(true);
-    slayout->setCurrentWidget(body);
-  }
 }
 
 void HomeWindow::offroadTransition(bool offroad) {
-  body->setEnabled(false);
   sidebar->setVisible(offroad);
   if (offroad) {
     slayout->setCurrentWidget(home);
@@ -89,22 +78,13 @@ void HomeWindow::showDriverView(bool show) {
 
 void HomeWindow::mousePressEvent(QMouseEvent* e) {
   // Handle sidebar collapsing
-  if ((onroad->isVisible() || body->isVisible()) && (!sidebar->isVisible() || e->x() > sidebar->width())) {
+  if ((onroad->isVisible()) && (!sidebar->isVisible() || e->x() > sidebar->width())) {
     sidebar->setVisible(!sidebar->isVisible() && !onroad->isMapVisible());
   }
 }
 
 void HomeWindow::mouseDoubleClickEvent(QMouseEvent* e) {
   HomeWindow::mousePressEvent(e);
-  const SubMaster &sm = *(uiState()->sm);
-  if (sm["carParams"].getCarParams().getNotCar()) {
-    if (onroad->isVisible()) {
-      slayout->setCurrentWidget(body);
-    } else if (body->isVisible()) {
-      slayout->setCurrentWidget(onroad);
-    }
-    showSidebar(false);
-  }
 }
 
 // OffroadHome: the offroad home page
