@@ -1,3 +1,4 @@
+import os
 Import('env', 'envCython', 'arch', 'device', 'cereal', 'messaging', 'common', 'gpucommon', 'visionipc', 'transformations')
 lenv = env.Clone()
 lenvCython = envCython.Clone()
@@ -62,7 +63,9 @@ if device == 'KA2' and arch == "larch64" or GetOption('pc_thneed'):
   cmd = f"cd {Dir('#').abspath}/tinygrad_repo && " + ' '.join(tinygrad_opts) + f" python openpilot/compile2.py {fn}.onnx {fn}.thneed"
 
   tinygrad_files = lenv.Glob("#tinygrad_repo/**/*.py")
-  lenv.Command(fn + ".thneed", [fn + ".onnx"] + tinygrad_files, cmd)
+  onnx_exists = lenv.Dir(fn.replace(fn.split('/')[-1], '')).abspath + fn.split('/')[-1] + ".onnx"
+  if os.path.exists(onnx_exists):
+    lenv.Command(fn + ".thneed", [fn + ".onnx"] + tinygrad_files, cmd)
 
   thneed_lib = env.SharedLibrary('thneed', thneed_src, LIBS=[gpucommon, common, 'zmq', 'OpenCL', 'dl'])
   thneedmodel_lib = env.Library('thneedmodel', ['runners/thneedmodel.cc'])
