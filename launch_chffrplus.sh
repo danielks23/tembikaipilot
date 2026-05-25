@@ -78,7 +78,11 @@ function launch {
 
   # start manager
   cd selfdrive/manager
-  if [ ! -f $DIR/prebuilt ]; then
+  _current_commit=$(git -C "$DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
+  _stored_commit=$(cat "$DIR/prebuilt" 2>/dev/null || echo "")
+  if [ ! -f "$DIR/prebuilt" ] || [ "$_current_commit" != "$_stored_commit" ]; then
+    echo "Code change detected (stored: $_stored_commit, current: $_current_commit), rebuilding..."
+    rm -f "$DIR/prebuilt"
     ./build.py
   fi
   ./manager.py

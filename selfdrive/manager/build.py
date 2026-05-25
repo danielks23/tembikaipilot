@@ -82,6 +82,15 @@ def build(spinner: Spinner, dirty: bool = False, minimal: bool = False) -> None:
     cache_size -= f.stat().st_size
     f.unlink()
 
+  # Create prebuilt marker file only after successful build
+  # Write the current git commit hash so startup can detect code changes.
+  prebuilt_path = os.path.join(BASEDIR, 'prebuilt')
+  try:
+    commit = subprocess.check_output(["git", "-C", BASEDIR, "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+  except Exception:
+    commit = ""
+  Path(prebuilt_path).write_text(commit)
+
 
 if __name__ == "__main__":
   spinner = Spinner()
