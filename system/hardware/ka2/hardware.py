@@ -170,6 +170,8 @@ class Ka2(HardwareBase):
 
   def get_modem(self):
     objects = self.mm.GetManagedObjects(dbus_interface="org.freedesktop.DBus.ObjectManager", timeout=TIMEOUT)
+    if not objects:
+      return None
     modem_path = list(objects.keys())[0]
     return self.bus.get_object(MM, modem_path)
 
@@ -183,6 +185,15 @@ class Ka2(HardwareBase):
 
   def get_sim_info(self):
     modem = self.get_modem()
+    if modem is None:
+      return {
+        'sim_id': '',
+        'mcc_mnc': None,
+        'network_type': ["Unknown"],
+        'sim_state': ["ABSENT"],
+        'data_connected': False
+      }
+
     sim_path = modem.Get(MM_MODEM, 'Sim', dbus_interface=DBUS_PROPS, timeout=TIMEOUT)
 
     if sim_path == "/":

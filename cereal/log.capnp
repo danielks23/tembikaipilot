@@ -54,9 +54,9 @@ struct InitData {
     neo @1;
     chffrAndroid @2;
     chffrIos @3;
-    tizi @6;
-    mici @7;
-    ka2 @8;
+    tizi @4;
+    mici @5;
+    ka2 @6;
   }
 
   struct PandaInfo {

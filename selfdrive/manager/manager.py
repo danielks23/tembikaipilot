@@ -42,7 +42,7 @@ def manager_init() -> None:
     ("OpenpilotEnabledToggle", "1"),
     ("LongitudinalPersonality", str(log.LongitudinalPersonality.standard)),
   ]
-  default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))
+  default_params.append(("LastUpdateTime", datetime.datetime.now(datetime.UTC).isoformat().encode('utf8')))
 
   if params.get_bool("RecordFrontLock"):
     params.put_bool("RecordFront", True)

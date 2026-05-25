@@ -1,3 +1,5 @@
+import os
+
 from cereal import car
 from openpilot.common.params import Params
 from openpilot.system.hardware import KA2, HARDWARE
@@ -68,8 +70,6 @@ procs = [
   # debug procs
   NativeProcess("bridge", "cereal/messaging", ["./bridge"], notcar),
   PythonProcess("webrtcd", "system.webrtc.webrtcd", notcar),
-  PythonProcess("webjoystick", "tools.bodyteleop.web", notcar),
-
   # stream data
   PythonProcess("streamdatad", "selfdrive.streamdatad.streamdatad", always_run, enabled=True),
   PythonProcess("sdformatterd", "system.hardware.ka2.formatdevice", format_sd, enabled=True),
