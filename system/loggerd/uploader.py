@@ -95,6 +95,9 @@ def get_pending_full_upload_segments() -> list[str]:
       return []
     data = resp.json()
     return data.get("segments") or []
+  except AuthException:
+    cloudlog.warning("get_pending_full_upload_segments: auth failed, check device credentials on server")
+    return []
   except Exception:
     cloudlog.exception("get_pending_full_upload_segments failed")
     return []
@@ -111,6 +114,8 @@ def post_full_upload_done(logdir: str) -> None:
       json={"logdir": logdir},
       headers=headers,
     )
+  except AuthException:
+    cloudlog.warning("post_full_upload_done: auth failed, check device credentials on server", logdir=logdir)
   except Exception:
     cloudlog.exception("post_full_upload_done failed", logdir=logdir)
 
