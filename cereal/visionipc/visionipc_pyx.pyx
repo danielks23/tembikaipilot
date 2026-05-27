@@ -25,8 +25,7 @@ cpdef enum VisionStreamType:
   VISION_STREAM_ROAD
   VISION_STREAM_DRIVER
   VISION_STREAM_WIDE_ROAD
-  VISION_STREAM_MAP
-
+ 
 
 cdef class VisionBuf:
   @staticmethod

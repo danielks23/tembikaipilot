@@ -152,19 +152,7 @@ void MapWindow::updateState(const UIState &s) {
     }
   }
 
-  if (sm.updated("navRoute") && sm["navRoute"].getNavRoute().getCoordinates().size()) {
-    auto nav_dest = coordinate_from_param("NavDestination");
-    bool allow_open = std::exchange(last_valid_nav_dest, nav_dest) != nav_dest &&
-                      nav_dest && !isVisible();
-    qWarning() << "Got new navRoute from navd. Opening map:" << allow_open;
-
-    // Show map on destination set/change
-    if (allow_open) {
-      emit requestSettings(false);
-      emit requestVisible(true);
-    }
-  }
-
+ 
   loaded_once = loaded_once || (m_map && m_map->isFullyLoaded());
   if (!loaded_once) {
     setError(tr("Map Loading"));
@@ -203,40 +191,8 @@ void MapWindow::updateState(const UIState &s) {
     interaction_counter--;
   }
 
-  if (sm.updated("navInstruction")) {
-    // an invalid navInstruction packet with a nav destination is only possible if:
-    // - API exception/no internet
-    // - route response is empty
-    // - any time navd is waiting for recompute_countdown
-    routing_problem = !sm.valid("navInstruction") && coordinate_from_param("NavDestination").has_value();
-
-    if (sm.valid("navInstruction")) {
-      auto i = sm["navInstruction"].getNavInstruction();
-      map_eta->updateETA(i.getTimeRemaining(), i.getTimeRemainingTypical(), i.getDistanceRemaining());
-
-      if (locationd_valid) {
-        m_map->setPitch(MAX_PITCH); // TODO: smooth pitching based on maneuver distance
-        map_instructions->updateInstructions(i);
-      }
-    } else {
-      clearRoute();
-    }
-  }
-
-  if (sm.rcv_frame("navRoute") != route_rcv_frame) {
-    qWarning() << "Updating navLayer with new route";
-    auto route = sm["navRoute"].getNavRoute();
-    auto route_points = capnp_coordinate_list_to_collection(route.getCoordinates());
-    QMapLibre::Feature feature(QMapLibre::Feature::LineStringType, route_points, {}, {});
-    QVariantMap navSource;
-    navSource["type"] = "geojson";
-    navSource["data"] = QVariant::fromValue<QMapLibre::Feature>(feature);
-    m_map->updateSource("navSource", navSource);
-    m_map->setLayoutProperty("navLayer", "visibility", "visible");
-
-    route_rcv_frame = sm.rcv_frame("navRoute");
-    updateDestinationMarker();
-  }
+ 
+ 
 }
 
 void MapWindow::setError(const QString &err_str) {
@@ -367,24 +323,10 @@ void MapWindow::offroadTransition(bool offroad) {
     clearRoute();
     uiState()->scene.navigate_on_openpilot = false;
     routing_problem = false;
-  } else {
-    auto dest = coordinate_from_param("NavDestination");
-    emit requestVisible(dest.has_value());
   }
   last_bearing = {};
 }
 
 void MapWindow::updateDestinationMarker() {
-  auto nav_dest = coordinate_from_param("NavDestination");
-  if (nav_dest.has_value()) {
-    auto point = coordinate_to_collection(*nav_dest);
-    QMapLibre::Feature feature(QMapLibre::Feature::PointType, point, {}, {});
-    QVariantMap pinSource;
-    pinSource["type"] = "geojson";
-    pinSource["data"] = QVariant::fromValue<QMapLibre::Feature>(feature);
-    m_map->updateSource("pinSource", pinSource);
-    m_map->setPaintProperty("pinLayer", "visibility", "visible");
-  } else {
-    m_map->setPaintProperty("pinLayer", "visibility", "none");
-  }
+  m_map->setPaintProperty("pinLayer", "visibility", "none");
 }

@@ -15,7 +15,7 @@
 
 std::string get_endpoint_name(std::string name, VisionStreamType type){
   if (messaging_use_zmq()){
-    assert(name == "camerad" || name == "navd");
+    assert(name == "camerad");
     return std::to_string(9000 + static_cast<int>(type));
   } else {
     return "visionipc_" + name + "_" + std::to_string(type);
