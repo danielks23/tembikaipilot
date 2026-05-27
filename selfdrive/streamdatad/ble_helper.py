@@ -2,7 +2,7 @@
 import threading
 from time import monotonic, sleep
 from queue import SimpleQueue
-from bluezero import adapter, peripheral
+from bluezero import adapter, peripheral, advertisement
 
 # BLE Nordic UART UUIDs
 UART_SERVICE      = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E'
@@ -11,11 +11,38 @@ TX_CHARACTERISTIC = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'  # Notify to phone
 
 CHUNK_TIMEOUT = 1.0  # seconds before dropping incomplete message
 
+
+class PersistentAdvertisement(advertisement.Advertisement):
+  """Advertisement that automatically re-registers when BlueZ calls Release()."""
+  def __init__(self, advert_id, ad_type, ad_manager):
+    super().__init__(advert_id, ad_type)
+    self.ad_manager = ad_manager
+    self._reregistering = False
+    self._release_count = 0
+
+  def Release(self):
+    if self._reregistering:
+      return
+    self._reregistering = True
+    self._release_count += 1
+    try:
+      self.ad_manager.register_advertisement(self, {})
+      print(f"Advertisement re-registered (release #{self._release_count})", flush=True)
+    except Exception as e:
+      print(f"Advertisement re-registration failed: {e}", flush=True)
+    finally:
+      self._reregistering = False
+
+
 class BLEBridge:
   """Threaded BLE Nordic UART bridge with RX and TX."""
   def __init__(self, local_name=None):
     self.ad = list(adapter.Adapter.available())[0]
+    self.ad.discoverable = True
     self.dev = peripheral.Peripheral(self.ad.address, local_name=local_name, appearance=963)
+    self.ad_manager = self.dev.ad_manager
+    self.dev.advert.remove_from_connection(self.dev.advert.bus)
+    self.dev.advert = PersistentAdvertisement(1, 'peripheral', self.ad_manager)
 
     self.rx_queue = SimpleQueue()
     self.tx_char = None
@@ -45,11 +72,14 @@ class BLEBridge:
 
   def on_connect(self, dev):
     self.connected = True
-    print(f"BLE Connected: {dev.address}")
+    self.ad.discoverable = True
+    print(f"BLE Connected: {dev.address}", flush=True)
 
   def on_disconnect(self, adapter_addr, dev_addr):
     self.connected = False
-    print(f"BLE Disconnected: {dev_addr}")
+    self.tx_char = None
+    self.ad.discoverable = True
+    print(f"BLE Disconnected: {dev_addr}", flush=True)
 
   def notify_state(self, notifying, characteristic):
     self.tx_char = characteristic if notifying else None
