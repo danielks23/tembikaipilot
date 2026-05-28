@@ -2175,7 +2175,7 @@ struct Event {
     carState @22 :Car.CarState;
     carControl @23 :Car.CarControl;
     longitudinalPlan @24 :LongitudinalPlan;
-    uiPlan @106 :UiPlan;
+    uiPlan @104 :UiPlan;
     ubloxGnss @34 :UbloxGnss;
     ubloxRaw @39 :Data;
     qcomGnss @31 :QcomGnss;
@@ -2216,7 +2216,7 @@ struct Event {
     clocks @35 :Clocks;
     deviceState @6 :DeviceState;
     logMessage @18 :Text;
-    errorLogMessage @85 :Text;
+    errorLogMessage @81 :Text;
 
      # UI services
     userFlag @93 :UserFlag;
