@@ -53,19 +53,11 @@ AddOption('--ccflags',
           default='',
           help='pass arbitrary flags over the command line')
 
-AddOption('--snpe',
-          help='use SNPE on PC')
-
 AddOption('--external-sconscript',
           action='store',
           metavar='FILE',
           dest='external_sconscript',
           help='add an external SConscript to the build')
-
-AddOption('--pc-thneed',
-          action='store_true',
-          dest='pc_thneed',
-          help='use thneed on pc')
 
 AddOption('--minimal',
           action='store_false',
@@ -123,9 +115,7 @@ if arch == "larch64":
     cpppath.append("/usr/include/rockchip")
     cpppath.append("/usr/local/include/rockchip")
   else:
-    cflags = ["-DQCOM2", "-mcpu=cortex-a57"]
-    cxxflags = ["-DQCOM2", "-mcpu=cortex-a57"]
-    libpath.append("#third_party/snpe/larch64")
+    assert False, "aarch64 builds without /KA2 marker are not supported. Only KA2 (larch64) is supported on aarch64."
 
   rpath += ["/usr/local/lib"]
 else:
@@ -160,13 +150,7 @@ else:
       "/usr/local/lib",
     ]
 
-    if arch == "x86_64":
-      libpath += [
-        f"#third_party/snpe/{arch}"
-      ]
-      rpath += [
-        Dir(f"#third_party/snpe/{arch}").abspath,
-      ]
+ 
 
 if GetOption('asan'):
   ccflags = ["-fsanitize=address", "-fno-omit-frame-pointer"]
@@ -218,7 +202,7 @@ env = Environment(
     "#third_party/rknpu/include",
     "#third_party/json11",
     "#third_party/linux/include",
-    "#third_party/snpe/include",
+ 
     "#third_party/qrcode",
     "#third_party",
     "#cereal",

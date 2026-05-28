@@ -78,15 +78,6 @@ All processes are managed by `selfdrive/manager/manager.py` via the registry in 
 |---|---|---|---|
 | `bridge` | Native | notCar | Cereal message bridge. Exposes ZMQ messages for debugging tools. |
 | `webrtcd` | Python | notCar | WebRTC streaming server for remote camera viewing. |
-| `webjoystick` | Python | notCar | Web-based joystick teleoperation (body/robot testing only). |
-
-### Navigation Model
-
-| Process | Type | When | Description |
-|---|---|---|---|
-| `navmodeld` | Python | onroad | Navigation model inference. Processes map tile images for lane-level predictions. **Note: runs but navd/mapsd are disabled on KA2.** |
-
----
 
 ## Disabled Processes
 
@@ -95,7 +86,7 @@ These processes exist in the codebase but are **not running on KA2** due to hard
 | Process | Reason Disabled |
 |---|---|
 | `athenad` | Comma's cloud telemetry daemon. KA2 uses its own KommuAI app via Bluetooth LE instead of comma's cloud infrastructure. |
-| `boardd` | Native panda USB interface daemon. KA2 has a built-in STM32H725 panda; the USB interface may be handled differently or not yet implemented. (`enabled=False` in process_config) |
+| `boardd` | Native panda USB interface daemon. Not started independently because `pandad` launches it as a subprocess with the detected panda serials. (`enabled=False` in process_config) |
 | `mapsd` | Map tile downloading and management. Requires navigation display — KA2 is headless with no screen. |
 | `navd` | Navigation daemon for routing and turn-by-turn directions. No display on KA2. |
 | `ui` | Qt5-based on-screen UI (dashboard, onroad view, menus). KA2 is headless — no display attached. |
@@ -123,5 +114,5 @@ Processes use boolean functions to determine when they should run:
 
 ## Source
 
-Process registry: `selfdrive/manager/process_config.py` (lines 33-76)
+Process registry: `selfdrive/manager/process_config.py` (lines 35-77)
 Process manager: `selfdrive/manager/manager.py`

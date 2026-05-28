@@ -7,27 +7,6 @@
 
 const std::string TEST_RLOG_URL = "https://commadataci.blob.core.windows.net/openpilotci/0c94aa1e1296d7c6/2021-05-05--19-48-37/0/rlog.bz2";
 
-TEST_CASE("DBCFile::generateDBC") {
-  QString fn = QString("%1/%2.dbc").arg(OPENDBC_FILE_PATH, "tesla_can");
-  DBCFile dbc_origin(fn);
-  DBCFile dbc_from_generated("", dbc_origin.generateDBC());
-
-  REQUIRE(dbc_origin.getMessages().size() == dbc_from_generated.getMessages().size());
-  auto &msgs = dbc_origin.getMessages();
-  auto &new_msgs = dbc_from_generated.getMessages();
-  for (auto &[id, m] : msgs) {
-    auto &new_m = new_msgs.at(id);
-    REQUIRE(m.name == new_m.name);
-    REQUIRE(m.size == new_m.size);
-    REQUIRE(m.getSignals().size() == new_m.getSignals().size());
-    auto sigs = m.getSignals();
-    auto new_sigs = new_m.getSignals();
-    for (int i = 0; i < sigs.size(); ++i) {
-      REQUIRE(*sigs[i] == *new_sigs[i]);
-    }
-  }
-}
-
 TEST_CASE("parse_dbc") {
   QString content = R"(
 BO_ 160 message_1: 8 EON

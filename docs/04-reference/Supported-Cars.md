@@ -2,9 +2,12 @@
 
 # Supported Cars
 
-A supported vehicle is one that just works when you install a comma device. All supported cars provide a better experience than any stock system. Supported vehicles reference the US market unless otherwise specified.
+**WARNING: This file is STALE and has not been regenerated after removing non-Malaysian car brands.**
+**To regenerate: `python selfdrive/car/docs.py --out docs/04-reference/Supported-Cars.md`**
 
-# 288 Supported Cars
+**Currently supported brands (Malaysia only):** byd, dnga (Perodua), honda, hyundai, mazda, nissan, proton, subaru, toyota, volkswagen
+
+A supported vehicle is one that just works when you install a KA2 device. Supported vehicles reference the Malaysian market.
 
 |Make|Model|Supported Package|ACC|No ACC accel below|No ALC below|Steering Torque|Resume from stop|<a href="##"><img width=2000></a>Hardware Needed<br>&nbsp;|Video|
 |---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|

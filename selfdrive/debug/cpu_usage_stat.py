@@ -30,10 +30,7 @@ from openpilot.selfdrive.manager.process_config import managed_processes
 PRINT_INTERVAL = 5
 SLEEP_INTERVAL = 0.2
 
-monitored_proc_names = [
-  # android procs
-  'SurfaceFlinger', 'sensors.qcom'
-] + list(managed_processes.keys())
+monitored_proc_names = list(managed_processes.keys())
 
 cpu_time_names = ['user', 'system', 'children_user', 'children_system']
 

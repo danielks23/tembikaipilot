@@ -197,6 +197,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"StoppingDistanceOffset", PERSISTENT},
     {"TermsVersion", PERSISTENT},
     {"Timezone", PERSISTENT},
+    {"TmuxLogsEnabled", PERSISTENT},
     {"TrainingVersion", PERSISTENT},
     {"UbloxAvailable", PERSISTENT},
     {"UpdateAvailable", CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION},

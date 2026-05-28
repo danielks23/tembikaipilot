@@ -50,18 +50,6 @@ private:
 };
 
 
-class MapSettingsButton : public QPushButton {
-  Q_OBJECT
-
-public:
-  explicit MapSettingsButton(QWidget *parent = 0);
-
-private:
-  void paintEvent(QPaintEvent *event) override;
-
-  QPixmap settings_img;
-};
-
 // container window for the NVG UI
 class AnnotatedCameraWidget : public CameraWidget {
   Q_OBJECT
@@ -70,7 +58,7 @@ public:
   explicit AnnotatedCameraWidget(VisionStreamType type, QWidget* parent = 0);
   void updateState(const UIState &s);
 
-  MapSettingsButton *map_settings_btn;
+  
 
 private:
   void drawText(QPainter &p, int x, int y, const QString &text, int alpha = 255);
@@ -120,11 +108,8 @@ class OnroadWindow : public QWidget {
 
 public:
   OnroadWindow(QWidget* parent = 0);
-  bool isMapVisible() const { return map && map->isVisible(); }
-  void showMapPanel(bool show) { if (map) map->setVisible(show); }
-
-signals:
-  void mapPanelRequested();
+  bool isMapVisible() const { return false; }
+  void showMapPanel(bool show) {}
 
 private:
   void paintEvent(QPaintEvent *event);
@@ -132,7 +117,6 @@ private:
   OnroadAlerts *alerts;
   AnnotatedCameraWidget *nvg;
   QColor bg = bg_colors[STATUS_DISENGAGED];
-  QWidget *map = nullptr;
   QHBoxLayout* split;
 
 private slots:

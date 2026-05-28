@@ -47,13 +47,6 @@ overview.rst
 - {ref}`search`
 
 ```{toctree}
-:caption: 'Python API'
-:maxdepth: 2
-
-modules.rst
-```
-
-```{toctree}
 :caption: 'C/C++ API'
 :maxdepth: 4
 

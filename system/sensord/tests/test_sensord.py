@@ -4,66 +4,13 @@ import pytest
 import time
 import unittest
 import numpy as np
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 
 import cereal.messaging as messaging
-from cereal import log
 from cereal.services import SERVICE_LIST
 from openpilot.common.gpio import get_irqs_for_action
 from openpilot.common.timeout import Timeout
 from openpilot.selfdrive.manager.process_config import managed_processes
-
-BMX = {
-  ('bmx055', 'acceleration'),
-  ('bmx055', 'gyroUncalibrated'),
-  ('bmx055', 'magneticUncalibrated'),
-  ('bmx055', 'temperature'),
-}
-
-LSM = {
-  ('lsm6ds3', 'acceleration'),
-  ('lsm6ds3', 'gyroUncalibrated'),
-  ('lsm6ds3', 'temperature'),
-}
-LSM_C = {(x[0]+'trc', x[1]) for x in LSM}
-
-MMC = {
-  ('mmc5603nj', 'magneticUncalibrated'),
-}
-
-SENSOR_CONFIGURATIONS = (
-  (BMX | LSM),
-  (MMC | LSM),
-  (BMX | LSM_C),
-  (MMC| LSM_C),
-)
-
-Sensor = log.SensorEventData.SensorSource
-SensorConfig = namedtuple('SensorConfig', ['type', 'sanity_min', 'sanity_max'])
-ALL_SENSORS = {
-  Sensor.lsm6ds3: {
-    SensorConfig("acceleration", 5, 15),
-    SensorConfig("gyroUncalibrated", 0, .2),
-    SensorConfig("temperature", 0, 60),
-  },
-
-  Sensor.lsm6ds3trc: {
-    SensorConfig("acceleration", 5, 15),
-    SensorConfig("gyroUncalibrated", 0, .2),
-    SensorConfig("temperature", 0, 60),
-  },
-
-  Sensor.bmx055: {
-    SensorConfig("acceleration", 5, 15),
-    SensorConfig("gyroUncalibrated", 0, .2),
-    SensorConfig("magneticUncalibrated", 0, 300),
-    SensorConfig("temperature", 0, 60),
-  },
-
-  Sensor.mmc5603nj: {
-    SensorConfig("magneticUncalibrated", 0, 300),
-  }
-}
 
 
 def get_irq_count(irq: int):
@@ -125,17 +72,7 @@ class TestSensord(unittest.TestCase):
   def tearDown(self):
     managed_processes["sensord"].stop()
 
-  def test_sensors_present(self):
-    # verify correct sensors configuration
-    seen = set()
-    for etype in self.events:
-      for measurement in self.events[etype]:
-        m = getattr(measurement, measurement.which())
-        seen.add((str(m.source), m.which()))
-
-    self.assertIn(seen, SENSOR_CONFIGURATIONS)
-
-  def test_lsm6ds3_timing(self):
+  def test_icm42670_timing(self):
     # verify measurements are sampled and published at 104Hz
 
     sensor_t = {
@@ -182,7 +119,7 @@ class TestSensord(unittest.TestCase):
         m = getattr(measurement, measurement.which())
 
         # check if gyro and accel timestamps are before logMonoTime
-        if str(m.source).startswith("lsm6ds3") and m.which() != 'temperature':
+        if str(m.source).startswith("icm42670") and m.which() != 'temperature':
           err_msg = f"Timestamp after logMonoTime: {m.timestamp} > {measurement.logMonoTime}"
           assert m.timestamp < measurement.logMonoTime, err_msg
 
@@ -196,34 +133,6 @@ class TestSensord(unittest.TestCase):
 
     avg_diff = round(sum(tdiffs)/len(tdiffs), 4)
     assert avg_diff < 4, f"Avg packet diff: {avg_diff:.1f}ms"
-
-  def test_sensor_values(self):
-    sensor_values = dict()
-    for etype in self.events:
-      for measurement in self.events[etype]:
-        m = getattr(measurement, measurement.which())
-        key = (m.source.raw, m.which())
-        values = getattr(m, m.which())
-
-        if hasattr(values, 'v'):
-          values = values.v
-        values = np.atleast_1d(values)
-
-        if key in sensor_values:
-          sensor_values[key].append(values)
-        else:
-          sensor_values[key] = [values]
-
-    # Sanity check sensor values
-    for sensor, stype in sensor_values:
-      for s in ALL_SENSORS[sensor]:
-        if s.type != stype:
-          continue
-
-        key = (sensor, s.type)
-        mean_norm = np.mean(np.linalg.norm(sensor_values[key], axis=1))
-        err_msg = f"Sensor '{sensor} {s.type}' failed sanity checks {mean_norm} is not between {s.sanity_min} and {s.sanity_max}"
-        assert s.sanity_min <= mean_norm <= s.sanity_max, err_msg
 
   def test_sensor_verify_no_interrupts_after_stop(self):
     managed_processes["sensord"].start()

@@ -34,37 +34,6 @@ unsigned int subaru_checksum(uint32_t address, const Signal &sig, const std::vec
   return s & 0xFF;
 }
 
-unsigned int chrysler_checksum(uint32_t address, const Signal &sig, const std::vector<uint8_t> &d) {
-  // jeep chrysler canbus checksum from http://illmatics.com/Remote%20Car%20Hacking.pdf
-  uint8_t checksum = 0xFF;
-  for (int j = 0; j < (d.size() - 1); j++) {
-    uint8_t shift = 0x80;
-    uint8_t curr = d[j];
-    for (int i = 0; i < 8; i++) {
-      uint8_t bit_sum = curr & shift;
-      uint8_t temp_chk = checksum & 0x80U;
-      if (bit_sum != 0U) {
-        bit_sum = 0x1C;
-        if (temp_chk != 0U) {
-          bit_sum = 1;
-        }
-        checksum = checksum << 1;
-        temp_chk = checksum | 1U;
-        bit_sum ^= temp_chk;
-      } else {
-        if (temp_chk != 0U) {
-          bit_sum = 0x1D;
-        }
-        checksum = checksum << 1;
-        bit_sum ^= checksum;
-      }
-      checksum = bit_sum;
-      shift = shift >> 1;
-    }
-  }
-  return ~checksum & 0xFF;
-}
-
 // Static lookup table for fast computation of CRCs
 uint8_t crc8_lut_8h2f[256]; // CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 uint16_t crc16_lut_xmodem[256]; // CRC16 poly 0x1021, aka XMODEM

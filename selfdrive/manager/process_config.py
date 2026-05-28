@@ -55,6 +55,7 @@ procs = [
   PythonProcess("deleter", "system.loggerd.deleter", always_run),
   PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=True),
   PythonProcess("alert_ledd", "system.hardware.ka2.status_led.alert_ledd", always_run, enabled=KA2),
+  PythonProcess("tmuxledd", "system.hardware.ka2.tmuxledd", always_run, enabled=KA2),
   PythonProcess("pandad", "selfdrive.boardd.pandad", always_run),
   PythonProcess("paramsd", "selfdrive.locationd.paramsd", only_onroad),
   PythonProcess("plannerd", "selfdrive.controls.plannerd", only_onroad),

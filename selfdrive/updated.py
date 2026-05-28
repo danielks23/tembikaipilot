@@ -221,7 +221,7 @@ def handle_agnos_update() -> None:
   set_consistent_flag(False)
 
   cloudlog.info(f"Beginning background installation for AGNOS {updated_version}")
-  set_offroad_alert("Offroad_NeosUpdate", True)
+  set_offroad_alert("Offroad_AgnosUpdate", True)
 
   manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/ka2/agnos.json")
   target_slot_number = get_target_slot_number()
@@ -232,7 +232,7 @@ def handle_agnos_update() -> None:
       run(["sudo", "rm", "-rf", "/data/rootfs_overlay"])
       swap(manifest_path, target_slot_number, cloudlog)
       subprocess.run(["python3", "/usr/kommu/ws2812.py", "rainbow"], check=True)
-  set_offroad_alert("Offroad_NeosUpdate", False)
+  set_offroad_alert("Offroad_AgnosUpdate", False)
 
 
 

@@ -56,7 +56,6 @@ ButtonType = car.CarState.ButtonEvent.Type
 SafetyModel = car.CarParams.SafetyModel
 
 IGNORED_SAFETY_MODES = (SafetyModel.silent, SafetyModel.noOutput)
-CSID_MAP = {"1": EventName.roadCameraError, "2": EventName.wideRoadCameraError, "0": EventName.driverCameraError}
 ACTUATOR_FIELDS = tuple(car.CarControl.Actuators.schema.fields.keys())
 ACTIVE_STATES = (State.enabled, State.softDisabling, State.overriding)
 ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
@@ -193,8 +192,6 @@ class Controls:
 
     self.sensor_packets = ["accelerometer", "gyroscope"]
     self.camera_packets = ["roadCameraState", "driverCameraState", "wideRoadCameraState"]
-
-    self.log_sock = messaging.sub_sock('androidLog')
 
     self.params = Params()
     ignore = self.sensor_packets + ['testJoystick']
@@ -489,17 +486,6 @@ class Controls:
     planner_fcw = self.sm['longitudinalPlan'].fcw and self.enabled
     if planner_fcw or model_fcw:
       self.events.add(EventName.fcw)
-
-    for m in messaging.drain_sock(self.log_sock, wait_for_one=False):
-      try:
-        msg = m.androidLog.message
-        if any(err in msg for err in ("ERROR_CRC", "ERROR_ECC", "ERROR_STREAM_UNDERFLOW", "APPLY FAILED")):
-          csid = msg.split("CSID:")[-1].split(" ")[0]
-          evt = CSID_MAP.get(csid, None)
-          if evt is not None:
-            self.events.add(evt)
-      except UnicodeDecodeError:
-        pass
 
     # TODO: fix simulator
     if not SIMULATION or REPLAY:

@@ -12,15 +12,6 @@ common_src = [
   "transforms/transform.cc",
 ]
 
-if device == 'KA2':
-  thneed_src_common = [
-    "thneed/thneed_common.cc",
-    "thneed/serialize.cc",
-  ]
-
-  thneed_src_pc = thneed_src_common + ["thneed/thneed_pc.cc"]
-  thneed_src = thneed_src_pc
-
 rknn_lib = []
 if device == 'KA2':
   rknn_lib += ['rknnrt']
@@ -48,17 +39,4 @@ if arch == "larch64":
   lenvCython.Program('runners/rknnmodel_pyx.so', 'runners/rknnmodel_pyx.pyx', LIBS=[rknnmodel_lib, rknn_lib, *cython_libs], FRAMEWORKS=frameworks, RPATH=f"{Dir('#').abspath}/third_party/rknpu/aarch64")
 lenvCython.Program('models/commonmodel_pyx.so', 'models/commonmodel_pyx.pyx', LIBS=[commonmodel_lib, *cython_libs], FRAMEWORKS=frameworks)
 
-# Build thneed model (not used on KA2 — RKNN is the only runner)
-if GetOption('pc_thneed'):
-  fn = File("models/supercombo").abspath
-  tinygrad_opts = []
-  cmd = f"cd {Dir('#').abspath}/tinygrad_repo && " + ' '.join(tinygrad_opts) + f" python openpilot/compile2.py {fn}.onnx {fn}.thneed"
 
-  tinygrad_files = lenv.Glob("#tinygrad_repo/**/*.py")
-  onnx_exists = lenv.Dir(fn.replace(fn.split('/')[-1], '')).abspath + fn.split('/')[-1] + ".onnx"
-  if os.path.exists(onnx_exists):
-    lenv.Command(fn + ".thneed", [fn + ".onnx"] + tinygrad_files, cmd)
-
-  thneed_lib = env.SharedLibrary('thneed', thneed_src, LIBS=[gpucommon, common, 'zmq', 'OpenCL', 'dl'])
-  thneedmodel_lib = env.Library('thneedmodel', ['runners/thneedmodel.cc'])
-  lenvCython.Program('runners/thneedmodel_pyx.so', 'runners/thneedmodel_pyx.pyx', LIBS=envCython["LIBS"]+[thneedmodel_lib, thneed_lib, gpucommon, common, 'dl', 'zmq', 'OpenCL'])

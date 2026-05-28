@@ -47,7 +47,7 @@ The KA2 device runs openpilot's ADAS features (ACC, ALC, FCW, LDW) on custom Roc
 
 | Component | Details |
 |------|------|
-| **SoC** | Rockchip RK3588 (ARM64/aarch64) |
+| **SoC** | Rockchip RK3588 (octa-core: 4x A55 [0-3] @ 1.8GHz, 4x A76 [4-7] @ 2.4GHz) |
 | **NPU** | 1 GHz (configured via devfreq) |
 | **DDR** | 2.112 GHz (configured via devfreq) |
 | **OS** | RK-AGNOS |
@@ -98,8 +98,6 @@ class GPIO:
     STM_RST_N   = 124   # STM32 reset (active-high — high = reset)
     STM_BOOT0   = 134   # STM32 BOOT0 (firmware recovery mode)
 ```
-
-**Note:** `SOM_ST_IO` is pin 49 in `gpio.sh`, not pin 4. The `pins.py` definition may be outdated.
 
 ### Full Board Pinout (from `/usr/kommu/gpio.sh`)
 
@@ -160,9 +158,39 @@ ka2.set_power_save(False)  # Enable performance
 ```
 
 **Implementation:**
-- **Power Save:** Cores 5-8 offline, cores 0/4 use `ondemand` governor
-- **Performance:** All cores online, cores 0/4 use `performance` governor
+- **Power Save:** Cores 5-7 offline, cores 0/4 use `ondemand` governor
+- **Performance:** Cores 5-7 online (all 8 cores), cores 0/4 use `performance` governor
 - Core 4 is reserved for `boardd` (never offlined)
+- Core affinity for processes must use valid cores only (see [CPU Core Offlining](#cpu-core-offlining))
+
+### CPU Core Offlining
+
+RK3588 has 8 cores (0-7), but cores 5-7 are **dynamically offlined** by `/usr/kommu/rkaiq_3A_server` (Rockchip camera 3A daemon):
+
+| Event | Timestamp | Action |
+|---|---|---|
+| Boot | ~4s | All 8 cores online |
+| Boot | ~25s | `rkaiq_3A_server` offlines cores 5-7 via PSCI |
+| Manual | anytime | `echo 1 > /sys/devices/system/cpu/cpu{5,6,7}/online` restores them |
+| Periodic | ~24 min later | `rkaiq_3A_server` re-offlines cores 5-7 |
+
+**dmesg evidence:**
+```
+[    4s] CPU5-7: Booted secondary processor
+[   25s] psci: CPU5 killed (polled 0 ms)
+[   25s] psci: CPU6 killed (polled 0 ms)
+[   25s] psci: CPU7 killed (polled 0 ms)
+[ 1456s] psci: CPU5 killed (polled 0 ms)  ← re-offlined after manual restore
+```
+
+**Root cause:** `rkaiq_3A_server` is a closed-source Rockchip binary. The CPU offlining logic is internal and untraceable (generic symbols, no CPU-related strings). Likely done via PSCI ioctl or dynamically-constructed sysfs paths inside `librkaiq.so`.
+
+**Not caused by:** CPU governor (`ondemand`) only controls frequency scaling. Cpuidle (`psci_idle`) handles idle states (`WFI`, `cpu-sleep`) but cannot offline cores.
+
+**Mitigation options:**
+1. **Periodic restore** — systemd timer or cron to `echo 1 > /sys/devices/system/cpu/cpu{5,6,7}/online` every minute
+2. **Immutable sysfs** — `chattr +i /sys/devices/system/cpu/cpu{5,6,7}/online` to block writes
+3. **Disable daemon** — `systemctl stop rkaiq_3A.service` (may break camera auto-focus/exposure)
 
 ### IRQ Affinity
 

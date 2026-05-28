@@ -60,7 +60,7 @@ one
 notebooks
 xx
 yy
-hyperthneed
+
 panda_jungle
 provisioning
 
@@ -75,8 +75,6 @@ flycheck_*
 cppcheck_report.txt
 comma*.sh
 
-selfdrive/modeld/thneed/compile
-selfdrive/modeld/models/*.thneed
 selfdrive/modeld/models/*.pkl
 
 *.bz2
