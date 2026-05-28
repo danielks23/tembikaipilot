@@ -2158,14 +2158,14 @@ struct Event {
     gpsNMEA @3 :GPSNMEAData;
     can @5 :List(CanData);
     controlsState @7 :ControlsState;
-    gyroscope @99 :SensorEventData;
-    gyroscope2 @100 :SensorEventData;
-    accelerometer @98 :SensorEventData;
-    accelerometer2 @101 :SensorEventData;
-    magnetometer @95 :SensorEventData;
-    lightSensor @96 :SensorEventData;
-    temperatureSensor @97 :SensorEventData;
-    temperatureSensor2 @123 :SensorEventData;
+    gyroscope @96 :SensorEventData;
+    gyroscope2 @97 :SensorEventData;
+    accelerometer @95 :SensorEventData;
+    accelerometer2 @98 :SensorEventData;
+    magnetometer @92 :SensorEventData;
+    lightSensor @93 :SensorEventData;
+    temperatureSensor @94 :SensorEventData;
+    temperatureSensor2 @118 :SensorEventData;
     pandaStates @81 :List(PandaState);
     peripheralState @80 :PeripheralState;
     radarState @13 :RadarState;
@@ -2175,15 +2175,15 @@ struct Event {
     carState @22 :Car.CarState;
     carControl @23 :Car.CarControl;
     longitudinalPlan @24 :LongitudinalPlan;
-    uiPlan @104 :UiPlan;
+    uiPlan @101 :UiPlan;
     ubloxGnss @34 :UbloxGnss;
     ubloxRaw @39 :Data;
     qcomGnss @31 :QcomGnss;
     gpsLocationExternal @48 :GpsLocationData;
     gpsLocation @21 :GpsLocationData;
-    gnssMeasurements @91 :GnssMeasurements;
+    gnssMeasurements @88 :GnssMeasurements;
     liveParameters @61 :LiveParametersData;
-    liveTorqueParameters @94 :LiveTorqueParametersData;
+    liveTorqueParameters @91 :LiveTorqueParametersData;
     cameraOdometry @63 :CameraOdometry;
     thumbnail @66: Thumbnail;
     onroadEvents @68: List(Car.CarEvent);
@@ -2191,7 +2191,7 @@ struct Event {
     driverMonitoringState @71: DriverMonitoringState;
     liveLocationKalman @72 :LiveLocationKalman;
     modelV2 @75 :ModelDataV2;
-    driverStateV2 @92 :DriverStateV2;
+    driverStateV2 @89 :DriverStateV2;
      # camera stuff, each camera state has a matching encode idx
     roadCameraState @2 :FrameData;
     driverCameraState @70: FrameData;
@@ -2199,14 +2199,14 @@ struct Event {
     roadEncodeIdx @15 :EncodeIndex;
     driverEncodeIdx @76 :EncodeIndex;
     wideRoadEncodeIdx @77 :EncodeIndex;
-    qRoadEncodeIdx @90 :EncodeIndex;
+    qRoadEncodeIdx @87 :EncodeIndex;
 
-    livestreamRoadEncodeIdx @117 :EncodeIndex;
-    livestreamWideRoadEncodeIdx @118 :EncodeIndex;
-    livestreamDriverEncodeIdx @119 :EncodeIndex;
+    livestreamRoadEncodeIdx @112 :EncodeIndex;
+    livestreamWideRoadEncodeIdx @113 :EncodeIndex;
+    livestreamDriverEncodeIdx @114 :EncodeIndex;
 
     # microphone data
-    microphone @103 :Microphone;
+    microphone @100 :Microphone;
 
     # systems stuff
     androidLog @20 :AndroidLogEntry;
@@ -2216,38 +2216,38 @@ struct Event {
     clocks @35 :Clocks;
     deviceState @6 :DeviceState;
     logMessage @18 :Text;
-    errorLogMessage @81 :Text;
+    errorLogMessage @82 :Text;
 
      # UI services
-    userFlag @93 :UserFlag;
-    uiDebug @102 :UIDebug;
+    userFlag @90 :UserFlag;
+    uiDebug @99 :UIDebug;
 
     # *********** debug ***********
     testJoystick @52 :Joystick;
-    roadEncodeData @86 :EncodeData;
-    driverEncodeData @87 :EncodeData;
-    wideRoadEncodeData @88 :EncodeData;
-    qRoadEncodeData @89 :EncodeData;
+    roadEncodeData @83 :EncodeData;
+    driverEncodeData @84 :EncodeData;
+    wideRoadEncodeData @85 :EncodeData;
+    qRoadEncodeData @86 :EncodeData;
 
-    livestreamRoadEncodeData @120 :EncodeData;
-    livestreamWideRoadEncodeData @121 :EncodeData;
-    livestreamDriverEncodeData @122 :EncodeData;
+    livestreamRoadEncodeData @115 :EncodeData;
+    livestreamWideRoadEncodeData @116 :EncodeData;
+    livestreamDriverEncodeData @117 :EncodeData;
 
-    customReservedRawData0 @124 :Data;
-    customReservedRawData1 @125 :Data;
-    customReservedRawData2 @126 :Data;
+    customReservedRawData0 @119 :Data;
+    customReservedRawData1 @120 :Data;
+    customReservedRawData2 @121 :Data;
 
     # *********** Custom: reserved for forks ***********
-    customReserved0 @107 :Custom.CustomReserved0;
-    customReserved1 @108 :Custom.CustomReserved1;
-    customReserved2 @109 :Custom.CustomReserved2;
-    customReserved3 @110 :Custom.CustomReserved3;
-    customReserved4 @111 :Custom.CustomReserved4;
-    customReserved5 @112 :Custom.CustomReserved5;
-    customReserved6 @113 :Custom.CustomReserved6;
-    customReserved7 @114 :Custom.CustomReserved7;
-    customReserved8 @115 :Custom.CustomReserved8;
-    customReserved9 @116 :Custom.CustomReserved9;
+    customReserved0 @102 :Custom.CustomReserved0;
+    customReserved1 @103 :Custom.CustomReserved1;
+    customReserved2 @104 :Custom.CustomReserved2;
+    customReserved3 @105 :Custom.CustomReserved3;
+    customReserved4 @106 :Custom.CustomReserved4;
+    customReserved5 @107 :Custom.CustomReserved5;
+    customReserved6 @108 :Custom.CustomReserved6;
+    customReserved7 @109 :Custom.CustomReserved7;
+    customReserved8 @110 :Custom.CustomReserved8;
+    customReserved9 @111 :Custom.CustomReserved9;
 
     # *********** legacy + deprecated ***********
     model @9 :Legacy.ModelData; # TODO: rename modelV2 and mark this as deprecated
