@@ -56,7 +56,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="stats" id="stats"></div>
 <script>
 async function load(path) {
-  const resp = await fetch('/api' + (path || ''));
+  const resp = await fetch(path ? `/api?path=${encodeURIComponent(path)}` : '/api');
   const data = await resp.json();
   document.getElementById('path').textContent = data.path;
   document.getElementById('back').innerHTML = data.parent ? `<a href="?path=${data.parent}">← Parent</a>` : '';
