@@ -90,6 +90,8 @@ def format_time(mtime):
     return time.strftime("%Y-%m-%d %H:%M", time.localtime(mtime))
 
 class LogHandler(SimpleHTTPRequestHandler):
+    server_dir = None
+    
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == '/' or parsed.path == '/index.html':
@@ -113,11 +115,11 @@ class LogHandler(SimpleHTTPRequestHandler):
                 path_dict[k] = unquote(v)
         
         rel_path = path_dict.get('path', '')
-        target = os.path.join(LOG_DIR, rel_path) if rel_path else LOG_DIR
+        target = os.path.join(self.server_dir, rel_path) if rel_path else self.server_dir
         target = os.path.normpath(target)
         
         # Security: prevent path traversal
-        if not target.startswith(LOG_DIR):
+        if not target.startswith(self.server_dir):
             self._send_json({"error": "Access denied"})
             return
         
@@ -129,7 +131,7 @@ class LogHandler(SimpleHTTPRequestHandler):
         try:
             for name in sorted(os.listdir(target)):
                 full = os.path.join(target, name)
-                rel = os.path.relpath(full, LOG_DIR)
+                rel = os.path.relpath(full, self.server_dir)
                 stat = os.stat(full)
                 entries.append({
                     "name": name,
@@ -158,11 +160,11 @@ class LogHandler(SimpleHTTPRequestHandler):
                 path_dict[k] = unquote(v)
         
         rel_path = path_dict.get('path', '')
-        target = os.path.join(LOG_DIR, rel_path) if rel_path else LOG_DIR
+        target = os.path.join(self.server_dir, rel_path) if rel_path else self.server_dir
         target = os.path.normpath(target)
         
         # Security: prevent path traversal
-        if not target.startswith(LOG_DIR):
+        if not target.startswith(self.server_dir):
             self.send_error(403)
             return
         
@@ -206,11 +208,11 @@ def main():
         print(f"Error: {args.path} not found", file=sys.stderr)
         sys.exit(1)
     
-    LOG_DIR = args.path
+    LogHandler.server_dir = args.path
     
     server = HTTPServer((args.host, args.port), LogHandler)
     print(f"KA2 Log Downloader running at http://{args.host}:{args.port}")
-    print(f"Serving: {LOG_DIR}")
+    print(f"Serving: {args.path}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
