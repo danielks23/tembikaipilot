@@ -152,3 +152,9 @@ If connection fails, verify:
 2. IP address hasn't changed (check router DHCP table)
 3. SSH key exists at `~/.ssh/kommu_ed25519`
 4. Try hostname fallback: `ssh kommu@kommu-0b4c08ef3e99cfb2 "echo OK"`
+
+## See Also
+
+- **ka2-debug-logs** for detailed log investigation (tmux scrollback, journalctl, dmesg, tmux file logs)
+- **ka2-sync** for deploying local changes
+- **ka2-deploy** for full git repo sync

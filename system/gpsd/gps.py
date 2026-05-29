@@ -33,7 +33,12 @@ from openpilot.system.gpsd.structs import (dict_unpacker, position_report, relis
 DEBUG = int(os.getenv("DEBUG", "0"))==1
 ASSIST_DATA_FILE = '/tmp/xtra3grc.bin'
 ASSIST_DATA_FILE_DOWNLOAD = ASSIST_DATA_FILE + '.download'
-ASSISTANCE_URL = 'http://xtrapath3.izatcloud.net/xtra3grc.bin'
+ASSIST_DATA_CACHE = '/data/xtra3grc.bin'
+ASSISTANCE_URLS = [
+  'http://xtrapath3.izatcloud.net/xtra3grc.bin',
+  'http://xtrapath2.izatcloud.net/xtra2grc.bin',
+  'http://xtrapath1.izatcloud.net/xtra1grc.bin',
+]
 
 LOG_TYPES = [
   LOG_GNSS_GPS_MEASUREMENT_REPORT,
@@ -99,21 +104,30 @@ def gps_enabled() -> bool:
   return "QGPS: 1" in at_cmd("AT+QGPS?")
 
 def download_assistance():
-  try:
-    response = requests.get(ASSISTANCE_URL, timeout=5, stream=True)
+  for url in ASSISTANCE_URLS:
+    try:
+      response = requests.get(url, timeout=5, stream=True)
 
-    with open(ASSIST_DATA_FILE_DOWNLOAD, 'wb') as fp:
-      for chunk in response.iter_content(chunk_size=8192):
-        fp.write(chunk)
-        if fp.tell() > 1e5:
-          cloudlog.error("Qcom assistance data larger than expected")
-          return
+      with open(ASSIST_DATA_FILE_DOWNLOAD, 'wb') as fp:
+        for chunk in response.iter_content(chunk_size=8192):
+          fp.write(chunk)
+          if fp.tell() > 1e5:
+            cloudlog.error("Qcom assistance data larger than expected")
+            return
 
-    os.rename(ASSIST_DATA_FILE_DOWNLOAD, ASSIST_DATA_FILE)
+      os.rename(ASSIST_DATA_FILE_DOWNLOAD, ASSIST_DATA_FILE)
+      # Cache for future use
+      try:
+        shutil.copy2(ASSIST_DATA_FILE, ASSIST_DATA_CACHE)
+      except Exception:
+        pass
+      cloudlog.info(f"Downloaded assistance data from {url}")
+      return
 
-  except requests.exceptions.RequestException:
-    cloudlog.exception("Failed to download assistance file")
-    return
+    except requests.exceptions.RequestException:
+      continue
+  cloudlog.error("Failed to download assistance file from all sources")
+  return
 
 def downloader_loop(event):
   if os.path.exists(ASSIST_DATA_FILE):
@@ -166,12 +180,22 @@ def setup_quectel(diag: ModemDiag) -> bool:
   at_cmd("AT+QGPSCFG=\"autogps\",0")
 
   # Do internet assistance
+  # Enable SUPL network assistance (modem fetches directly over cellular)
   at_cmd("AT+QGPSXTRA=1")
-  at_cmd("AT+QGPSSUPLURL=\"NULL\"")
+  at_cmd("AT+QGPSSUPLURL=\"supl.google.com\"")
+  # Try fresh file first, then cached file
   if os.path.exists(ASSIST_DATA_FILE):
     ret = True
     inject_assistance()
     os.remove(ASSIST_DATA_FILE)
+  elif os.path.exists(ASSIST_DATA_CACHE):
+    try:
+      shutil.copy2(ASSIST_DATA_CACHE, ASSIST_DATA_FILE)
+      ret = True
+      inject_assistance()
+      os.remove(ASSIST_DATA_FILE)
+    except Exception:
+      pass
   #at_cmd("AT+QGPSXTRADATA?")
   time_str = datetime.datetime.utcnow().strftime("%Y/%m/%d,%H:%M:%S")
   at_cmd(f"AT+QGPSXTRATIME=0,\"{time_str}\",1,1,1000")

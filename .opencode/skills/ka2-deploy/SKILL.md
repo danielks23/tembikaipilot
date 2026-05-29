@@ -21,7 +21,7 @@ See **ka2-ssh** skill for connection details.
 #    - clear __pycache__
 #    - delete prebuilt marker
 #    - restart kommu
-#    - check errors via tmux capture-pane + journalctl
+#    - check errors (see ka2-debug-logs skill for log commands)
 
 # 2. ONLY if no errors were found — commit locally and git sync
 git add -A
@@ -67,7 +67,7 @@ ssh Kommu "tmux capture-pane -t 0 -S - -p | tail -20"
 #    Look for "scons: done building targets." to confirm completion.
 #    After build, kommu starts automatically. Verify processes are running:
 #    Look for a process list line containing: logmessaged, pandad, thermald, tombstoned, updated, uploader, statsd, streamdatad, etc.
-#    Also check journalctl for errors:
+#    Also check for errors (see ka2-debug-logs skill):
 ssh Kommu "journalctl -u kommu --no-pager -n 30"
 ```
 

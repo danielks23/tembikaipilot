@@ -2,6 +2,8 @@ import os
 from functools import lru_cache
 
 def gpio_init(pin: int, output: bool) -> None:
+  if pin < 0:
+    return
   try:
     with open(f"/sys/class/gpio/gpio{pin}/direction", 'wb') as f:
       f.write(b"out" if output else b"in")
@@ -9,6 +11,8 @@ def gpio_init(pin: int, output: bool) -> None:
     print(f"Failed to set gpio {pin} direction: {e}")
 
 def gpio_set(pin: int, high: bool) -> None:
+  if pin < 0:
+    return
   try:
     with open(f"/sys/class/gpio/gpio{pin}/value", 'wb') as f:
       f.write(b"1" if high else b"0")
@@ -16,6 +20,8 @@ def gpio_set(pin: int, high: bool) -> None:
     print(f"Failed to set gpio {pin} value: {e}")
 
 def gpio_read(pin: int) -> bool | None:
+  if pin < 0:
+    return None
   val = None
   try:
     with open(f"/sys/class/gpio/gpio{pin}/value", 'rb') as f:

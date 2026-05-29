@@ -26,13 +26,13 @@ Syncs files edited locally during this session to the KA2 device at `/data/openp
    ```powershell
    ssh Kommu "sudo systemctl restart kommu"
    ```
-6. **Check for errors** (see ka2-ssh skill):
-   ```powershell
-   ssh Kommu "tmux capture-pane -t 0 -S - -p"
-   ssh Kommu "journalctl -u kommu --no-pager -n 50"
-   ```
-   Look for tracebacks, crash loops, or failed processes.
-   **System is running** if you see a process list line containing: `logmessaged, pandad, thermald, tombstoned, updated, uploader, statsd, streamdatad`, etc.
+  6. **Check for errors** (see ka2-debug-logs skill):
+    ```powershell
+    ssh Kommu "tmux capture-pane -t 0 -S - -p | grep -iE 'error|traceback|fail'"
+    ssh Kommu "journalctl -u kommu --no-pager -n 50"
+    ```
+    Look for tracebacks, crash loops, or failed processes.
+    **System is running** if you see a process list line containing: `logmessaged, pandad, thermald, tombstoned, updated, uploader, statsd, streamdatad`, etc.
 
 **If errors are found:** Report what went wrong and ask the user for next steps. Do NOT attempt to fix automatically.
 

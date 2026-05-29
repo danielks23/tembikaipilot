@@ -206,9 +206,10 @@ The `prebuilt` file (empty, in `.gitignore`) is a build-status marker:
 
 Project-specific agent skills in `.opencode/skills/`:
 
-- **ka2-ssh** — SSH into KA2 (`Kommu` @ `192.168.1.193`). Run commands, check logs, monitor processes, restart services, reboot/shutdown. Use `tmux capture-pane -t 0 -S - -p` for full terminal output.
+- **ka2-ssh** — SSH into KA2 (`Kommu` @ `192.168.1.193`). Run commands, check logs, monitor processes, restart services, reboot/shutdown.
 - **ka2-sync** — Sync locally edited files to KA2 at `/data/openpilot/`. Uses `scp`, clears `__pycache__`, deletes `prebuilt` marker, restarts `kommu`, and checks for errors.
 - **ka2-deploy** — Full deploy workflow. Syncs files first (via ka2-sync), tests on KA2, then commits and git-syncs. Also supports **Hard Reset** to force KA2 to match local HEAD.
+- **ka2-debug-logs** — Debug KA2 issues using tmux scrollback, systemd journal, and tmux file logs. Use for process crashes, startup failures, crash loops, and any problem requiring log investigation.
 
 **System is running** if tmux output shows a process list containing: `logmessaged, pandad, thermald, tombstoned, updated, uploader, statsd, streamdatad`, etc.
 
