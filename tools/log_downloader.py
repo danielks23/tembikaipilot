@@ -12,6 +12,8 @@ import os
 import sys
 import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
+from socketserver import ThreadingMixIn
 from urllib.parse import unquote, urlparse
 
 DEFAULT_PORT = 8080
@@ -210,7 +212,10 @@ def main():
     
     LogHandler.server_dir = args.path
     
-    server = HTTPServer((args.host, args.port), LogHandler)
+    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+    
+    server = ThreadedHTTPServer((args.host, args.port), LogHandler)
     print(f"KA2 Log Downloader running at http://{args.host}:{args.port}")
     print(f"Serving: {args.path}")
     try:
