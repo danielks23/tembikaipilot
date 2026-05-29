@@ -87,6 +87,32 @@ echo 2112000000 > /sys/class/devfreq/dmc/userspace/set_freq
 
 ---
 
+## NPU (RKNN)
+
+### OpenCL Library Fix
+
+RKNN loads `libOpenCL.so` via `dlopen()` to enable zero-copy memory sharing between CPU and NPU using `clImportMemoryARM`. The default ICD loader (`libOpenCL.so.1.0.0`, 132KB) does **not** have this symbol — it only exists in the Mali driver.
+
+**Symptom:** `E RKNN: Cannot find the clImportMemoryARM in libOpenCL.so!` at modeld startup.
+
+**Impact:** Without this symbol, RKNN falls back to CPU memory copies for every inference frame, which are not freed → **memory leak** (~436MB per 30-minute drive).
+
+**Fix:** Replace `libOpenCL.so` symlink to point directly to the Mali driver:
+
+```bash
+sudo ln -sf /usr/lib/aarch64-linux-gnu/libmali-x11/libmali-valhall-g610-g13p0-x11-wayland-gbm.so /usr/lib/aarch64-linux-gnu/libOpenCL.so
+```
+
+**Verify:**
+```bash
+nm -D /usr/lib/aarch64-linux-gnu/libOpenCL.so | grep clImportMemoryARM
+# Should output: 0000000000411fe0 T clImportMemoryARM
+```
+
+This is a **device-side fix** that must be applied on each KA2 unit. It survives reboots but not OS updates.
+
+---
+
 ## GPIO Pinout
 
 ### Openpilot GPIO Definitions
@@ -293,6 +319,182 @@ nmcli con down lte
 nmcli con down blue-prime
 sudo systemctl start ModemManager
 sudo systemctl restart NetworkManager
+```
+
+---
+
+## GPS (EC25 Integrated GNSS)
+
+The KA2 uses the **integrated GNSS engine** inside the Quectel EC25-EM LTE modem. There is no separate U-blox GPS module.
+
+### Port Mapping
+
+| Port | Device | Purpose |
+|------|--------|---------|
+| Diag | `/dev/ttyUSB0` | Raw GNSS measurements (OEMDRE, diag protocol) |
+| NMEA | `/dev/ttyUSB1` | NMEA output stream |
+| AT | `/dev/ttyUSB2` | Primary AT command interface |
+| AT | `/dev/ttyUSB3` | Secondary AT command interface |
+
+### GPS Daemon (`gpsd`)
+
+| Property | Value |
+|----------|-------|
+| **Source** | `system/gpsd/gps.py` |
+| **Mode** | `only_onroad` (requires ignition to start) |
+| **Protocol** | Qualcomm diag protocol via `/dev/ttyUSB0` |
+| **Features** | OEMDRE raw measurements, XTRA assistance, cold/warm start |
+
+The daemon reads raw GNSS measurements directly from the modem's diag interface, bypassing NMEA entirely. It publishes `gpsLocation` and `qcomGnss` messages via cereal messaging.
+
+### GNSS_PWR_EN GPIO
+
+On KA2, `GNSS_PWR_EN` is set to `-1` (no-op) in `system/hardware/ka2/pins.py`. The EC25 provides its own 3V LNA bias on the antenna pin, so no external GPIO power control is needed.
+
+### XTRA Assistance Data
+
+The GPS daemon uses two methods for GPS assistance:
+
+**1. SUPL Network Assistance (primary)**
+The modem fetches assistance directly over cellular using SUPL protocol via `supl.google.com`. This is enabled by `AT+QGPSSUPLURL="supl.google.com"`.
+
+**2. XTRA File Download (fallback)**
+If SUPL is unavailable, the daemon downloads XTRA assistance files from multiple sources:
+- `http://xtrapath3.izatcloud.net/xtra3grc.bin`
+- `http://xtrapath2.izatcloud.net/xtra2grc.bin`
+- `http://xtrapath1.izatcloud.net/xtra1grc.bin`
+
+Successful downloads are cached to `/data/xtra3grc.bin` for use on subsequent boots when network is unavailable.
+
+Both methods require:
+- Active internet connection (LTE registered)
+- SIM card inserted and network registered
+
+If all assistance methods fail, the GPS will still work but will perform a slower cold start by downloading ephemeris directly from the satellites.
+
+### AT Commands
+
+#### GNSS Control
+
+| Command | Description |
+|---------|-------------|
+| `AT+QGPS=1` | Start GNSS engine |
+| `AT+QGPSEND` | Stop GNSS engine |
+| `AT+QGPS?` | Check GNSS status (returns `+QGPS: 0` or `+QGPS: 1`) |
+
+#### Configuration
+
+| Command | Description |
+|---------|-------------|
+| `AT+QGPSCFG="outport","usbnmea"` | Enable NMEA output on `/dev/ttyUSB1` |
+| `AT+QGPSCFG="outport","none"` | Disable NMEA output |
+| `AT+QGPSCFG="dpoenable",0` | Disable DPO power savings |
+| `AT+QGPSCFG="autogps",0` | Disable auto-start on powerup |
+| `AT+QGPSCFG="gpsnmeatype",1` | Enable RMC sentence output |
+
+#### Data Retrieval
+
+| Command | Description |
+|---------|-------------|
+| `AT+QGPSLOC` | Get current position (lat/lon/alt/speed) |
+| `AT+QGPSLOC=2` | Get position in decimal degrees |
+| `AT+QGPSGNMEA=GGA` | Get GGA NMEA sentence |
+| `AT+QGPSGNMEA=RMC` | Get RMC NMEA sentence |
+| `AT+QGPSGNMEA=GSV` | Get GSV satellite visibility sentence |
+
+#### Assistance
+
+| Command | Description |
+|---------|-------------|
+| `AT+QGPSXTRA=1` | Enable XTRA assistance |
+| `AT+QGPSXTRATIME=0,"YYYY/MM/DD,HH:MM:SS",1,1,1000` | Inject UTC time |
+| `AT+QGPSDEL=0` | Cold start (delete all assistance) |
+| `AT+QGPSDEL=1` | Warm start (keep some assistance) |
+| `AT+QGPSSUPLURL="NULL"` | Clear SUPL server URL |
+
+### Error Codes
+
+| Error | Meaning | Common Cause |
+|-------|---------|--------------|
+| `CME ERROR: 5` | Operation not allowed | GNSS engine not initialized |
+| `CME ERROR: 501` | Invalid parameter | Wrong parameter format |
+| `CME ERROR: 502` | GNSS engine not available | Antenna disconnected or engine not started |
+| `CME ERROR: 504` | GNSS already on | Tried `AT+QGPS=1` when already enabled |
+| `CME ERROR: 516` | Not fixed | No GPS lock yet |
+
+### Diagnostic Commands
+
+Check NMEA output:
+```bash
+timeout 5 cat /dev/ttyUSB1
+```
+
+Check GNSS status:
+```bash
+mmcli -m any --command='AT+QGPS?'
+mmcli -m any --command='AT+QGPSGNMEA=GSV'
+```
+
+Check satellite visibility (GSV example):
+```
+$GPGSV,3,1,09,32,47,098,43,01,01,250,,02,06,222,,03,23,303,*75
+```
+Format: `PRN, elevation, azimuth, SNR`
+
+### Known Issues
+
+#### ModemManager `PH-SIM PIN required` Error
+
+ModemManager may block AT commands with `PH-SIM PIN required` even when the SIM is `READY`. This is a ModemManager dbus bug. Workaround: stop ModemManager before sending AT commands directly.
+
+#### GPS Port Lock
+
+The diag port (`/dev/ttyUSB0`) uses exclusive locking. Only one process can access it at a time. If `gpsd` crashes, kill the leftover process before restarting:
+```bash
+fuser /dev/ttyUSB0
+kill -9 <PID>
+```
+
+#### Antenna Connection
+
+The EC25 requires an **active patch antenna** with LNA. The U.FL/IPEX connector on the module is tiny and can disconnect during shipping. Symptoms of disconnected antenna:
+- `AT+QGPS=1` returns OK
+- `AT+QGPSLOC` returns ERROR 502
+- `/dev/ttyUSB1` produces zero bytes
+- All GNSS config commands fail with ERROR 501/502
+
+#### Indoor GPS Performance
+
+Indoors, the EC25 typically sees 3-4 satellites with weak SNR. A GPS fix requires at least 4 satellites with strong signals. For testing:
+- Place antenna outside with clear sky view
+- Cold start may take 5-10 minutes without XTRA assistance
+- With XTRA assistance and clear sky, fix in under 60 seconds
+
+### Manual Testing
+
+Run gpsd manually (requires ignition for normal operation):
+```bash
+cd /data/openpilot
+GPS_COLD_START=1 PYTHONPATH=/data/openpilot /usr/local/venv/bin/python3 -m openpilot.system.gpsd.gps
+```
+
+Test GNSS without gpsd:
+```bash
+# Stop ModemManager to avoid port conflicts
+sudo systemctl stop ModemManager
+
+# Send AT commands directly
+python3 -c "
+import os, fcntl, time
+fd = os.open('/dev/ttyUSB2', os.O_RDWR | os.O_NOCTTY)
+fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
+os.write(fd, b'AT+QGPS=1\r\n')
+time.sleep(1)
+os.write(fd, b'AT+QGPSGNMEA=GSV\r\n')
+time.sleep(2)
+print(os.read(fd, 4096).decode())
+os.close(fd)
+"
 ```
 
 ---
