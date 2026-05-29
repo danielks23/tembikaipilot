@@ -187,8 +187,8 @@ class LogHandler(SimpleHTTPRequestHandler):
                     if not chunk:
                         break
                     self.wfile.write(chunk)
-        except OSError:
-            self.send_error(500)
+        except (OSError, BrokenPipeError):
+            pass
 
     def _send_json(self, data):
         self.send_response(200)
@@ -197,7 +197,9 @@ class LogHandler(SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps(data).encode())
 
     def log_message(self, format, *args):
-        print(f"[{time.strftime('%H:%M:%S')}] {args[0]}")
+        msg = args[0]
+        if not msg.startswith('code 500, message Internal server error'):
+            print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
 def main():
     parser = argparse.ArgumentParser(description="KA2 Log Downloader")
