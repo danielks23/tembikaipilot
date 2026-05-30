@@ -4,15 +4,18 @@ import functools
 from openpilot.common.swaglog import cloudlog
 
 
-def retry(attempts=3, delay=1.0, ignore_failure=False):
+def retry(attempts=3, delay=1.0, ignore_failure=False, log_traceback=True):
   def decorator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
       for _ in range(attempts):
         try:
           return func(*args, **kwargs)
-        except Exception:
-          cloudlog.exception(f"{func.__name__} failed, trying again")
+        except Exception as e:
+          if log_traceback:
+            cloudlog.exception(f"{func.__name__} failed, trying again")
+          else:
+            cloudlog.warning(f"{func.__name__} failed ({e}), trying again")
           time.sleep(delay)
 
       if ignore_failure:
