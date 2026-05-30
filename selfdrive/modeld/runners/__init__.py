@@ -1,13 +1,20 @@
 import os
+from openpilot.system.hardware import TICI, KA2
 from openpilot.selfdrive.modeld.runners.runmodel_pyx import RunModel, Runtime
 assert Runtime
 
+USE_THNEED = int(os.getenv('USE_THNEED', str(int(TICI) | int(KA2))))
+
 class ModelRunner(RunModel):
+  THNEED = 'THNEED'
   ONNX = 'ONNX'
   RKNN = 'RKNN'
 
   def __new__(cls, paths, *args, **kwargs):
-    if ModelRunner.RKNN in paths:
+    if ModelRunner.THNEED in paths and USE_THNEED:
+      from openpilot.selfdrive.modeld.runners.thneedmodel_pyx import ThneedModel as Runner
+      runner_type = ModelRunner.THNEED
+    elif ModelRunner.RKNN in paths:
       from openpilot.selfdrive.modeld.runners.rknnmodel_pyx import RKNNModel as Runner
       runner_type = ModelRunner.RKNN
     elif ModelRunner.ONNX in paths:

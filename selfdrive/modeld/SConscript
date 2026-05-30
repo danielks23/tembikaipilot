@@ -12,6 +12,16 @@ common_src = [
   "transforms/transform.cc",
 ]
 
+if device == 'TICI' or device == 'KA2':
+  thneed_src_common = [
+    "thneed/thneed_common.cc",
+    "thneed/serialize.cc",
+  ]
+
+  thneed_src_qcom = thneed_src_common + ["thneed/thneed_qcom2.cc"]
+  thneed_src_pc = thneed_src_common + ["thneed/thneed_pc.cc"]
+  thneed_src = thneed_src_qcom if (arch == "larch64" and device != 'KA2') else thneed_src_pc
+
 rknn_lib = []
 if device == 'KA2':
   rknn_lib += ['rknnrt']
@@ -38,5 +48,11 @@ lenvCython.Program('runners/runmodel_pyx.so', 'runners/runmodel_pyx.pyx', LIBS=c
 if arch == "larch64":
   lenvCython.Program('runners/rknnmodel_pyx.so', 'runners/rknnmodel_pyx.pyx', LIBS=[rknnmodel_lib, rknn_lib, *cython_libs], FRAMEWORKS=frameworks, RPATH=f"{Dir('#').abspath}/third_party/rknpu/aarch64")
 lenvCython.Program('models/commonmodel_pyx.so', 'models/commonmodel_pyx.pyx', LIBS=[commonmodel_lib, *cython_libs], FRAMEWORKS=frameworks)
+
+# Build thneed model
+if device == 'TICI' or device == 'KA2' and arch == "larch64":
+  thneed_lib = env.SharedLibrary('thneed', thneed_src, LIBS=[gpucommon, common, 'zmq', 'OpenCL', 'dl'])
+  thneedmodel_lib = env.Library('thneedmodel', ['runners/thneedmodel.cc'])
+  lenvCython.Program('runners/thneedmodel_pyx.so', 'runners/thneedmodel_pyx.pyx', LIBS=envCython["LIBS"]+[thneedmodel_lib, thneed_lib, gpucommon, common, 'dl', 'zmq', 'OpenCL'])
 
 

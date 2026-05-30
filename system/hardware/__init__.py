@@ -5,6 +5,7 @@ from openpilot.system.hardware.base import HardwareBase
 from openpilot.system.hardware.ka2.hardware import Ka2
 
 KA2 = os.path.isfile('/KA2')
+TICI = False
 PC = not KA2
 AGNOS = KA2
 
