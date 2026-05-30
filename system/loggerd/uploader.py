@@ -412,6 +412,10 @@ def main(exit_event: threading.Event = None) -> None:
     cloudlog.info("uploader missing dongle_id")
     raise Exception("uploader can't start without dongle id")
 
+  if params.get_bool("DisableUploader"):
+    cloudlog.warning("uploader is disabled by the DisableUploader param")
+    exit(0)
+
   sm = messaging.SubMaster(['deviceState'])
   pm = messaging.PubMaster(['uploaderState'])
   uploader = Uploader(dongle_id, Paths.log_root())

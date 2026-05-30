@@ -32,6 +32,9 @@ def only_offroad(started, params, CP: car.CarParams) -> bool:
 def format_sd(started: bool, params: Params, CP: car.CarParams) -> bool:
   return params.get_bool("FormatSDCard")
 
+
+
+
 procs = [
   NativeProcess("camerad", "system/camerad", ["./camerad"], driverview),
   NativeProcess("logcatd", "system/logcatd", ["./logcatd"], only_onroad),
