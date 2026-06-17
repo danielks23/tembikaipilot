@@ -107,3 +107,4 @@ sudo systemctl restart kommu
 - Some params are automatically cleared after their action completes (`DoShutdown`, `DoReboot`, `DoUninstall`, `FormatSDCard`)
 - Changes to process control params (`DisableUploader`, `DisableUpdates`, `ForceOnroad`) require `sudo systemctl restart kommu` to take effect
 - Process control params don't prevent the process from appearing in the manager — they cause the process to exit cleanly, showing it in **red** in the tmux process list
+- `DisableUploader` and `DisableUpdates` are handled by `IGNORE_PROCESSES` in controlsd, so they won't trigger `processNotRunning` blocking engagement
