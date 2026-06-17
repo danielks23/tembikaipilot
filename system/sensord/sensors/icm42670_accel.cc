@@ -28,9 +28,9 @@ int ICM42670_Accel::init() {
   TRY_OR_FAIL(set_register(ICM42670_REG_PWR_MGMT0,
                            ICM42670_PWR_MGMT0_NORMAL));
 
-  TRY_OR_FAIL(set_register(ICM42670_REG_ACCEL_CONFIG0,
-                           ICM42670_CONFIG_ACCEL_2_G |
-                           ICM42670_CONFIG_RATE_200_Hz));
+ TRY_OR_FAIL(set_register(ICM42670_REG_ACCEL_CONFIG0,
+                            ICM42670_CONFIG_ACCEL_2_G |
+                            ICM42670_CONFIG_RATE_100_Hz));
 
   // LPF bandwidth 16hz
   TRY_OR_FAIL(set_register(ICM42670_REG_ACCEL_CONFIG1,

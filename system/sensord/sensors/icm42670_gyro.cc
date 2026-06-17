@@ -31,9 +31,9 @@ int ICM42670_Gyro::init() {
 
   util::sleep_for(50);
 
-  TRY_OR_FAIL(set_register(ICM42670_REG_GYRO_CONFIG0,
-                           ICM42670_CONFIG_GYRO_250_DPS |
-                           ICM42670_CONFIG_RATE_200_Hz));
+TRY_OR_FAIL(set_register(ICM42670_REG_GYRO_CONFIG0,
+                            ICM42670_CONFIG_GYRO_250_DPS |
+                            ICM42670_CONFIG_RATE_100_Hz));
 
   util::sleep_for(20);
 
