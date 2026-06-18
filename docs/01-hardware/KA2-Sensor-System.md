@@ -48,16 +48,15 @@ ICM42670 (I2C bus 3)
 1. **sensord** reads ICM42670 via I2C, publishes `accelerometer`/`gyroscope` to MSGQ
 2. **locationd** subscribes to `accelerometer`/`gyroscope` via MSGQ, feeds ESKF
 3. **locationd** publishes `liveLocationKalman` to MSGQ
-4. **bridge** translates `liveLocationKalman` from MSGQ→ZMQ
-5. **controlsd**/paramsd/torqued subscribe to `liveLocationKalman` via ZMQ
+4. **controlsd**/paramsd/torqued subscribe to `liveLocationKalman` (C++ reads MSGQ directly, Python reads via ZMQ bridge when available)
 
 ## Critical Path
 
 ```
-ICM42670 → sensord → locationd → bridge → controlsd
+ICM42670 → sensord → locationd → controlsd (via liveLocationKalman)
 ```
 
-If any link breaks, controlsd shows "Sensor Data invalid" → SOFT_DISABLE.
+Sensor validation is handled by `locationd.inputsOK`. The `sensorDataInvalid` check in controlsd is disabled on KA2 because Python SubMaster (ZMQ) cannot read raw sensor data from sensord (MSGQ). The `locationd.inputsOK` flag already validates sensor health, making the raw sensor check redundant.
 
 ## Known Issues
 
@@ -131,6 +130,8 @@ print('posenetOK:', sm['liveLocationKalman'].posenetOK)
 | controlsd subscribed to `*2` services | Changed to `accelerometer`/`gyroscope` | `05401be` |
 | ICM42670 ODR 200 Hz → RateKeeper 104 Hz | Changed ODR to 100 Hz, services to 100 Hz | `05401be` |
 | SubMaster KeyError on unknown services | Skip unknown services in SubMaster | `05401be` |
+| `sensorDataInvalid` false positive | Disabled raw sensor check in controlsd, rely on `locationd.inputsOK` | `82c8a59` |
+| bridge process unnecessary | Reverted bridge to `notcar` in process_config.py | `82c8a59` |
 
 ## Comparison with Original openpilot
 
