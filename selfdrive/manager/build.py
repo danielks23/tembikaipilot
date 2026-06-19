@@ -26,9 +26,10 @@ def build_libyuv() -> None:
   libyuv_path = Path(BASEDIR) / "third_party" / "libyuv" / arch / "lib" / "libyuv.a"
   if not libyuv_path.exists():
     build_script = Path(BASEDIR) / "third_party" / "libyuv" / "build.sh"
+    build_dir = Path(BASEDIR) / "third_party" / "libyuv"
     if build_script.exists():
       cloudlog.info("libyuv.a missing, building from source...")
-      subprocess.check_call(["bash", str(build_script)], cwd=BASEDIR)
+      subprocess.check_call(["bash", "build.sh"], cwd=str(build_dir))
       if not libyuv_path.exists():
         cloudlog.error("libyuv build failed")
         exit(1)
