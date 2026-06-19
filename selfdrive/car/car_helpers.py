@@ -234,7 +234,7 @@ def fingerprint(logcan, sendcan, num_pandas):
 
   cloudlog.event("fingerprinted", car_fingerprint=car_fingerprint, source=source, fuzzy=not exact_match, cached=cached,
                  fw_count=len(car_fw), ecu_responses=list(ecu_rx_addrs), vin_rx_addr=vin_rx_addr, vin_rx_bus=vin_rx_bus,
-                 fingerprints=repr(finger), fw_query_time=fw_query_time, error=True)
+                 fingerprints=repr(finger), fw_query_time=fw_query_time, error=False)
 
   car_platform = PLATFORMS.get(car_fingerprint, car_fingerprint)
 
