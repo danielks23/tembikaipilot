@@ -17,12 +17,33 @@ CACHE_DIR = Path("/data/scons_cache" if AGNOS else "/tmp/scons_cache")
 TOTAL_SCONS_NODES = 2560
 MAX_BUILD_PROGRESS = 100
 
+def build_libyuv() -> None:
+  """Build libyuv.a if missing (LFS deleted from server, must build from source)."""
+  import platform
+  arch = platform.machine()
+  if arch == "aarch64" and os.path.isfile("/KA2"):
+    arch = "larch64"
+  libyuv_path = Path(BASEDIR) / "third_party" / "libyuv" / arch / "lib" / "libyuv.a"
+  if not libyuv_path.exists():
+    build_script = Path(BASEDIR) / "third_party" / "libyuv" / "build.sh"
+    if build_script.exists():
+      cloudlog.info("libyuv.a missing, building from source...")
+      subprocess.check_call(["bash", str(build_script)], cwd=BASEDIR)
+      if not libyuv_path.exists():
+        cloudlog.error("libyuv build failed")
+        exit(1)
+      cloudlog.info("libyuv.a built successfully")
+
+
 def build(spinner: Spinner, dirty: bool = False, minimal: bool = False) -> None:
   env = os.environ.copy()
   env['SCONS_PROGRESS'] = "1"
   nproc = os.cpu_count()
   if nproc is None:
     nproc = 2
+
+  # Build libyuv before scons if missing
+  build_libyuv()
 
   extra_args = ["--minimal"] if minimal else []
 
