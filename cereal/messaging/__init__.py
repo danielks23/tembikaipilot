@@ -241,6 +241,8 @@ class SubMaster:
         continue
 
       s = msg.which()
+      if s not in self.recv_time:
+        continue
       self.seen[s] = True
       self.updated[s] = True
 

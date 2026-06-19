@@ -21,9 +21,9 @@ class Service:
 services: dict[str, tuple] = {
   # service: (should_log, frequency, qlog decimation (optional))
   # note: the "EncodeIdx" packets will still be in the log
-  "gyroscope": (True, 104., 104),
+  "gyroscope": (True, 100., 100),
   "gyroscope2": (True, 100., 100),
-  "accelerometer": (True, 104., 104),
+  "accelerometer": (True, 100., 100),
   "accelerometer2": (True, 100., 100),
   "magnetometer": (True, 25., 25),
   "lightSensor": (True, 100., 100),

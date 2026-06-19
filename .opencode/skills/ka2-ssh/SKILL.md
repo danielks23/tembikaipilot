@@ -10,14 +10,20 @@ description: SSH into the KA2 device for remote command execution. Use when the 
 | Field | Value |
 |-------|-------|
 | Host alias | `Kommu` |
-| IP address | `192.168.1.193` |
+| Home IP | `192.168.1.193` |
+| Hotspot IP | `172.20.10.3` |
 | User | `kommu` |
 | SSH key | `~/.ssh/kommu_ed25519` |
 | Key type | ed25519 |
 
 SSH config is in `~/.ssh/config` under the `Host Kommu` entry.
 
-**Hostname fallback:** If the IP `192.168.1.193` doesn't work, try the hostname `kommu-0b4c08ef3e99cfb2`:
+**Auto-detect network:** Check local IP with `ifconfig`. If on `172.20.10.x` subnet (phone hotspot), use `172.20.10.3`. Otherwise use `192.168.1.193` (home).
+
+**Fallback IPs:**
+- Home: `192.168.1.193` (home network)
+- Hotspot: `172.20.10.3` (phone hotspot in car)
+- Hostname: `kommu-0b4c08ef3e99cfb2` (mDNS fallback)
 ```powershell
 ssh kommu@kommu-0b4c08ef3e99cfb2 "command here"
 ```
@@ -140,8 +146,11 @@ ssh Kommu
 # Test connectivity
 ssh -o ConnectTimeout=10 Kommu "echo OK"
 
-# Force key auth
+# Force key auth (home)
 ssh -i ~/.ssh/kommu_ed25519 -o IdentitiesOnly=yes kommu@192.168.1.193 "hostname"
+
+# Force key auth (hotspot)
+ssh -i ~/.ssh/kommu_ed25519 -o IdentitiesOnly=yes kommu@172.20.10.3 "hostname"
 
 # Check if SSH service is running on KA2
 ssh -o ConnectTimeout=5 Kommu "exit" 2>&1
@@ -151,7 +160,8 @@ If connection fails, verify:
 1. KA2 is powered on and on the same network
 2. IP address hasn't changed (check router DHCP table)
 3. SSH key exists at `~/.ssh/kommu_ed25519`
-4. Try hostname fallback: `ssh kommu@kommu-0b4c08ef3e99cfb2 "echo OK"`
+4. Try hotspot IP: `ssh -i ~/.ssh/kommu_ed25519 kommu@172.20.10.3 "echo OK"`
+5. Try hostname fallback: `ssh kommu@kommu-0b4c08ef3e99cfb2 "echo OK"`
 
 ## See Also
 

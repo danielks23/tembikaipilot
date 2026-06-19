@@ -8,6 +8,7 @@ cmake .
 make
 
 if [ -f /KA2 ]; then
+  mkdir -p ../larch64/lib/
   mv libyuv.a ../larch64/lib/
 fi
 
