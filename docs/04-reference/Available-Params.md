@@ -15,6 +15,7 @@ Parameters are stored in `/data/params/d/` and can be read/written via `Params()
 | Param | Type | Default | Effect |
 |---|---|---|---|
 | `IsDriverViewEnabled` | bool | `0` | When `1`, enables driver-facing camera processes offroad (`camerad`, `dmonitoringmodeld`, `dmonitoringd`). |
+| `DisableDriverMonitoring` | bool | `0` | When `1`, disables driver monitoring entirely. Stops `dmonitoringmodeld`, `dmonitoringd`, and disables the driver camera stream in `camerad`. AP engagement is **not blocked** — `controlsd` ignores `driverMonitoringState` when this param is set. |
 
 ## Development & Testing
 
@@ -95,9 +96,15 @@ echo -n '1' | sudo tee /data/params/d/DisableUploader
 sudo systemctl restart kommu
 ```
 
+**Disable driver monitoring (headless operation):**
+```bash
+echo -n '1' | sudo tee /data/params/d/DisableDriverMonitoring
+sudo systemctl restart kommu
+```
+
 **Clean up (reset to normal):**
 ```bash
-rm /data/params/d/ForceOnroad /data/params/d/DisableUploader /data/params/d/DisableUpdates
+rm /data/params/d/ForceOnroad /data/params/d/DisableUploader /data/params/d/DisableUpdates /data/params/d/DisableDriverMonitoring
 sudo systemctl restart kommu
 ```
 
@@ -105,6 +112,6 @@ sudo systemctl restart kommu
 
 - Boolean params are stored as `"1"` (True) or `"0"` (False)
 - Some params are automatically cleared after their action completes (`DoShutdown`, `DoReboot`, `DoUninstall`, `FormatSDCard`)
-- Changes to process control params (`DisableUploader`, `DisableUpdates`, `ForceOnroad`) require `sudo systemctl restart kommu` to take effect
+- Changes to process control params (`DisableUploader`, `DisableUpdates`, `ForceOnroad`, `DisableDriverMonitoring`) require `sudo systemctl restart kommu` to take effect
 - Process control params don't prevent the process from appearing in the manager — they cause the process to exit cleanly, showing it in **red** in the tmux process list
-- `DisableUploader` and `DisableUpdates` are handled by `IGNORE_PROCESSES` in controlsd, so they won't trigger `processNotRunning` blocking engagement
+- `DisableUploader`, `DisableUpdates`, and `DisableDriverMonitoring` are handled in controlsd to not trigger `processNotRunning` blocking engagement
