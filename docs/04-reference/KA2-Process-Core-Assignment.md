@@ -30,6 +30,26 @@ Processes set their core affinity via `config_realtime_process()` in `common/rea
 | `encoderd` | 3 | A55 | SCHED_FIFO/52 | Camera encoding (H.264) |
 | `loggerd` | 0-3 | A55 | (default) | Route data logging |
 | `uploader` | 0-3 | A55 | (default) | Cloud data upload |
+| `pandad` | 0-3 | A55 | (default) | Panda USB interface |
+| `thermald` | 0-3 | A55 | (default) | Thermal management |
+| `deleter` | 0-3 | A55 | (default) | Log deletion |
+| `logmessaged` | 0-3 | A55 | (default) | Log message relay |
+| `timed` | 0-3 | A55 | (default) | Time sync |
+| `tombstoned` | 0-3 | A55 | (default) | Crash reporting |
+| `statsd` | 0-3 | A55 | (default) | Statistics |
+| `streamdatad` | 0-3 | A55 | (default) | Stream data |
+| `setapnd` | 0-3 | A55 | (default) | APN configuration |
+| `gpsd` | 0-3 | A55 | (default) | GPS |
+| `micd` | 0-3 | A55 | (default) | Microphone |
+| `soundd` | 0-3 | A55 | (default) | Sound |
+| `calibrationd` | 0-3 | A55 | (default) | Camera calibration |
+| `dmonitoringd` | 0-3 | A55 | (default) | Driver monitoring |
+| `alert_ledd` | 0-3 | A55 | (default) | Alert LED |
+| `tmuxledd` | 0-3 | A55 | (default) | Tmux LED |
+| `updated` | 0-3 | A55 | (default) | OTA updates |
+| `logcatd` | 0-3 | A55 | (default) | Android logcat |
+| `proclogd` | 0-3 | A55 | (default) | Process logging |
+| `locationd` | 0-3 | A55 | SCHED_FIFO/5 | Sensor fusion |
 
 ## Verified Affinity (Live KA2)
 Confirmed on KA2 (all processes show correct `SCHED_FIFO` policy and core mask):
