@@ -15,6 +15,11 @@ def driver_monitoring(started: bool, params: Params, CP: car.CarParams) -> bool:
     return False
   return driverview(started, params, CP)
 
+def camerad_env(params: Params) -> dict:
+  if params and params.get_bool("DisableDriverMonitoring"):
+    return {"DISABLE_DRIVER": "1"}
+  return {}
+
 def notcar(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started and CP.notCar
 
@@ -41,7 +46,7 @@ def format_sd(started: bool, params: Params, CP: car.CarParams) -> bool:
 
 
 procs = [
-  NativeProcess("camerad", "system/camerad", ["./camerad"], only_onroad),
+  NativeProcess("camerad", "system/camerad", ["./camerad"], only_onroad, env=camerad_env),
   NativeProcess("logcatd", "system/logcatd", ["./logcatd"], only_onroad),
   NativeProcess("proclogd", "system/proclogd", ["./proclogd"], only_onroad),
   PythonProcess("logmessaged", "system.logmessaged", always_run),

@@ -191,9 +191,9 @@ void CameraState::camera_close() {
 }
 
 void cameras_close(MultiCameraState *s) {
-  s->driver_cam.camera_close();
-  s->road_cam.camera_close();
-  s->wide_road_cam.camera_close();
+  if (s->driver_cam.enabled) s->driver_cam.camera_close();
+  if (s->road_cam.enabled) s->road_cam.camera_close();
+  if (s->wide_road_cam.enabled) s->wide_road_cam.camera_close();
 
   delete s->pm;
 
@@ -259,9 +259,9 @@ void cameras_run(MultiCameraState *s) {
   if (s->road_cam.enabled) threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
   if (s->wide_road_cam.enabled) threads.push_back(start_process_thread(s, &s->wide_road_cam, process_road_camera));
 
-  s->wide_road_cam.stream_start();
-  s->road_cam.stream_start();
-  s->driver_cam.stream_start();
+  if (s->wide_road_cam.enabled) s->wide_road_cam.stream_start();
+  if (s->road_cam.enabled) s->road_cam.stream_start();
+  if (s->driver_cam.enabled) s->driver_cam.stream_start();
 
   uint64_t road_cam_ts[SYNC_CHECK_LEN];
   uint64_t wide_cam_ts[SYNC_CHECK_LEN];
@@ -271,9 +271,9 @@ void cameras_run(MultiCameraState *s) {
   LOG("-- Dequeueing Video events");
   while (!do_exit) {
     struct pollfd fds[3] = {
-      { .fd = s->driver_cam.video_fd, .events = POLLPRI | POLLIN },
-      { .fd = s->road_cam.video_fd, .events = POLLPRI | POLLIN },
-      { .fd = s->wide_road_cam.video_fd, .events = POLLPRI | POLLIN }
+      { .fd = s->driver_cam.enabled ? s->driver_cam.video_fd : -1, .events = POLLPRI | POLLIN },
+      { .fd = s->road_cam.enabled ? s->road_cam.video_fd : -1, .events = POLLPRI | POLLIN },
+      { .fd = s->wide_road_cam.enabled ? s->wide_road_cam.video_fd : -1, .events = POLLPRI | POLLIN }
     };
 
     int ret = poll(fds, std::size(fds), 1000);
