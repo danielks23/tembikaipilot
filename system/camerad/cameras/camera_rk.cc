@@ -271,9 +271,9 @@ void cameras_run(MultiCameraState *s) {
   LOG("-- Dequeueing Video events");
   while (!do_exit) {
     struct pollfd fds[3] = {
-      { .fd = s->driver_cam.enabled ? s->driver_cam.video_fd : -1, .events = POLLPRI | POLLIN },
-      { .fd = s->road_cam.enabled ? s->road_cam.video_fd : -1, .events = POLLPRI | POLLIN },
-      { .fd = s->wide_road_cam.enabled ? s->wide_road_cam.video_fd : -1, .events = POLLPRI | POLLIN }
+      { .fd = s->driver_cam.enabled ? (int)s->driver_cam.video_fd : -1, .events = POLLPRI | POLLIN },
+      { .fd = s->road_cam.enabled ? (int)s->road_cam.video_fd : -1, .events = POLLPRI | POLLIN },
+      { .fd = s->wide_road_cam.enabled ? (int)s->wide_road_cam.video_fd : -1, .events = POLLPRI | POLLIN }
     };
 
     int ret = poll(fds, std::size(fds), 1000);
