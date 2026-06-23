@@ -14,38 +14,43 @@ The KA2 (RK3588) has 8 CPU cores:
 *Note: `schedutil` was tested on A55 but showed no meaningful power savings under sustained onroad load.*
 
 ## Process CPU Affinity
-Processes set their core affinity via `config_realtime_process()` in `common/realtime.py`.
+Processes set their core affinity via `config_realtime_process()` in `common/realtime.py`. **Must be called before any blocking initialization** (e.g., `CarD`, `VisionIpcClient`) to ensure affinity is set before the process enters its main loop.
 
-| Process | Pinned Core(s) | Cluster | Role |
+| Process | Pinned Core(s) | Cluster | Policy | Role |
+|---|---|---|---|---|
+| `boardd` | 4 | A76 | SCHED_FIFO/54 | CAN hardware interface (100Hz) |
+| `controlsd` | 4 | A76 | SCHED_FIFO/53 | Main control loop (100Hz) |
+| `modeld` | 7 | A76 | SCHED_FIFO/54 | Road NN inference |
+| `dmonitoringmodeld` | 6 | A76 | SCHED_FIFO/56 | Driver monitoring NN |
+| `camerad` | 6 | A76 | SCHED_FIFO/53 | Camera capture & preprocessing |
+| `plannerd` | 5 | A76 | SCHED_FIFO/51 | Path planning & MPC |
+| `radard` | 5 | A76 | SCHED_FIFO/51 | Radar fusion & tracking |
+| `torqued` | 0-3 | A55 | SCHED_FIFO/5 | Live torque estimation |
+| `paramsd` | 0-3 | A55 | SCHED_FIFO/5 | Live vehicle param estimation |
+| `encoderd` | 3 | A55 | SCHED_FIFO/52 | Camera encoding (H.264) |
+| `loggerd` | 0-3 | A55 | (default) | Route data logging |
+| `uploader` | 0-3 | A55 | (default) | Cloud data upload |
+
+## Verified Affinity (Live KA2)
+Confirmed on KA2 (all processes show correct `SCHED_FIFO` policy and core mask):
+
+| Process | Core Mask | Policy | Verified |
 |---|---|---|---|
-| `boardd` | 4 | A76 | CAN hardware interface (100Hz) |
-| `controlsd` | 4 | A76 | Main control loop (100Hz) |
-| `modeld` | 7 | A76 | Road NN inference |
-| `dmonitoringmodeld` | 6 | A76 | Driver monitoring NN |
-| `camerad` | 6 | A76 | Camera capture & preprocessing |
-| `plannerd` | 5 | A76 | Path planning & MPC |
-| `radard` | 5 | A76 | Radar fusion & tracking |
-| `torqued` | 0-3 | A55 | Live torque estimation |
-| `paramsd` | 0-3 | A55 | Live vehicle param estimation |
-| `encoderd` | 3 | A55 | Camera encoding (H.264) |
-| `loggerd` | 0-3 | A55 | Route data logging |
-| `uploader` | 0-3 | A55 | Cloud data upload |
+| `controlsd` | `10` (core 4) | SCHED_FIFO/53 | Yes |
+| `boardd` | `10` (core 4) | SCHED_FIFO/54 | Yes |
+| `plannerd` | `20` (core 5) | SCHED_FIFO/51 | Yes |
+| `radard` | `20` (core 5) | SCHED_FIFO/51 | Yes |
+| `modeld` | `80` (core 7) | SCHED_FIFO/54 | Yes |
+| `dmonitoringmodeld` | `40` (core 6) | SCHED_FIFO/56 | Yes |
+| `camerad` | `40` (core 6) | SCHED_FIFO/53 | Yes |
+| `encoderd` | `8` (core 3) | SCHED_FIFO/52 | Yes |
+| `torqued` | `f` (cores 0-3) | SCHED_FIFO/5 | Yes |
+| `paramsd` | `f` (cores 0-3) | SCHED_FIFO/5 | Yes |
 
-*Note: `controlsd` currently has a bug where it falls back to cores 0-7 instead of pinning to core 4.*
+## Known Issues
 
-## Measured CPU Usage (Onroad, No Car)
-Based on `/proc/stat` sampling with `ForceOnroad=1`:
-
-| Core | Assigned Processes | Busy % | Notes |
-|---|---|---|---|
-| 0-2 | Background | 2-4% | Idle |
-| 3 | `encoderd`, `loggerd` | **13.7%** | Heaviest A55 core |
-| 4 | `boardd` | 1.9% | Light |
-| 5 | `plannerd`, `radard` | 1.9% | Light (no car) |
-| 6 | `modeld`, `camerad`, `dmonitoringmodeld` | **11.9%** | Heaviest A76 core |
-| 7 | `controlsd` | 1.7% | Light (no car) |
-
-*Real driving with a car connected will significantly increase load on cores 4, 5, and 7.*
+### `rkaiq_3A_server` re-offlines cores 5-7 (~24 min cycle)
+The closed-source Rockchip camera daemon periodically offlines cores 5-7, disrupting processes pinned to those cores (`plannerd`, `radard`, `dmonitoringmodeld`, `camerad`, `modeld`). No mitigation is currently implemented. See [KA2-Hardware-Reference](./KA2-Hardware-Reference.md#cpu-core-offlining) for options.
 
 ## Suggested Core Rebalancing
 Current assignment leaves core 6 overloaded and cores 5/7 underutilized.
@@ -53,7 +58,7 @@ Proposed changes to `common/realtime.py` and process configs:
 
 | Core | Proposed Assignment | Rationale |
 |---|---|---|
-| **4** | `boardd` + `controlsd` | Fixes controlsd bug, keeps 100Hz CAN↔control loop tight |
+| **4** | `boardd` + `controlsd` | Keeps 100Hz CAN↔control loop tight |
 | **5** | `modeld` | Heaviest process, deserves dedicated A76 core |
 | **6** | `camerad` + `dmonitoringmodeld` | Camera pipeline can share one core |
 | **7** | `plannerd` | MPC solver needs A76 latency |

@@ -218,6 +218,8 @@ RK3588 has 8 cores (0-7), but cores 5-7 are **dynamically offlined** by `/usr/ko
 2. **Immutable sysfs** — `chattr +i /sys/devices/system/cpu/cpu{5,6,7}/online` to block writes
 3. **Disable daemon** — `systemctl stop rkaiq_3A.service` (may break camera auto-focus/exposure)
 
+**Process startup ordering:** Processes that call `config_realtime_process()` **must do so before any blocking initialization**. For example, `controlsd` previously called it after `CarD(CI)` which blocks waiting for CAN messages, causing the affinity to never be set. The fix moves `config_realtime_process` to the top of `Controls.__init__` (see `controlsd.py:179`).
+
 ### IRQ Affinity
 
 Power save mode also adjusts IRQ affinity to concentrate interrupts on specific cores.

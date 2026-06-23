@@ -15,7 +15,7 @@ from cereal.services import SERVICE_LIST
 from openpilot.common.dict_helpers import strip_deprecated_keys
 from openpilot.common.filter_simple import FirstOrderFilter
 from openpilot.common.params import Params
-from openpilot.common.realtime import DT_TRML
+from openpilot.common.realtime import DT_TRML, set_core_affinity
 from openpilot.selfdrive.controls.lib.alertmanager import set_offroad_alert
 from openpilot.system.hardware import HARDWARE, KA2
 from openpilot.system.loggerd.config import get_available_percent
@@ -421,6 +421,8 @@ def thermald_thread(end_event, hw_queue) -> None:
 
 
 def main():
+  set_core_affinity([0, 1, 2, 3])
+
   hw_queue = queue.Queue(maxsize=1)
   end_event = threading.Event()
 

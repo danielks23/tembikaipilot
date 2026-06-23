@@ -10,6 +10,7 @@ from functools import cmp_to_key
 from panda import Panda, PandaDFU, PandaProtocolMismatch, FW_PATH
 from openpilot.common.basedir import BASEDIR
 from openpilot.common.params import Params
+from openpilot.common.realtime import set_core_affinity
 from openpilot.selfdrive.boardd.set_time import set_time
 from openpilot.system.hardware import HARDWARE
 from openpilot.common.swaglog import cloudlog
@@ -82,6 +83,8 @@ def panda_sort_cmp(a: Panda, b: Panda):
 
 
 def main() -> NoReturn:
+  set_core_affinity([0, 1, 2, 3])
+
   count = 0
   first_run = True
   params = Params()

@@ -177,12 +177,12 @@ class CarD:
 
 class Controls:
   def __init__(self, CI=None):
+    config_realtime_process(4, Priority.CTRL_HIGH)
+
     self.card = CarD(CI)
 
     self.CP = self.card.CP
     self.CI = self.card.CI
-
-    config_realtime_process(4, Priority.CTRL_HIGH)
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
     self.branch = get_short_branch()

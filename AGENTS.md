@@ -199,6 +199,7 @@ The `prebuilt` file (empty, in `.gitignore`) is a build-status marker:
 9. **KA2 uses micro SD**: No NVMe. Storage mount point is `/data/media`.
 10. **KA2 uses RKNN**: No Qualcomm SNPE, ION, or KGSL. Model inference via Rockchip NPU.
 11. **KA2 CPU cores**: RK3588 has 8 cores (4x A55 [0-3] @ 1.8GHz, 4x A76 [4-7] @ 2.4GHz). Cores 5-7 are offlined by `rkaiq_3A_server` at ~25s boot and **re-offlined periodically** (~24 min after any restore). Bring back via `echo 1 > /sys/devices/system/cpu/cpu{5,6,7}/online`. See `docs/01-hardware/KA2-Hardware-Reference.md#cpu-core-offlining`.
+12. **Process affinity ordering**: `config_realtime_process()` must be called **before** any blocking initialization (e.g., `CarD`, `VisionIpcClient`). If called after, the process may hang before reaching the affinity setup. See `controlsd.py:179` for the fix.
 12. **libyuv.a**: Not tracked in git (LFS deleted from server). Must be built locally on KA2 via `third_party/libyuv/build.sh` or copied manually.
 13. **UI build skipped on KA2**: Headless target — only `_text` and `_spinner` are built. Main `ui` binary and translations are skipped for `larch64`.
 
