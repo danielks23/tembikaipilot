@@ -10,6 +10,16 @@ WEBCAM = os.getenv("USE_WEBCAM") is not None
 def driverview(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started or params.get_bool("IsDriverViewEnabled") or not HARDWARE.booted()
 
+def driver_monitoring(started: bool, params: Params, CP: car.CarParams) -> bool:
+  if params.get_bool("DisableDriverMonitoring"):
+    return False
+  return driverview(started, params, CP)
+
+def camerad_env(params: Params) -> dict:
+  if params and params.get_bool("DisableDriverMonitoring"):
+    return {"DISABLE_DRIVER": "1"}
+  return {}
+
 def notcar(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started and CP.notCar
 
@@ -36,14 +46,14 @@ def format_sd(started: bool, params: Params, CP: car.CarParams) -> bool:
 
 
 procs = [
-  NativeProcess("camerad", "system/camerad", ["./camerad"], driverview),
+  NativeProcess("camerad", "system/camerad", ["./camerad"], only_onroad, env=camerad_env),
   NativeProcess("logcatd", "system/logcatd", ["./logcatd"], only_onroad),
   NativeProcess("proclogd", "system/proclogd", ["./proclogd"], only_onroad),
   PythonProcess("logmessaged", "system.logmessaged", always_run),
   PythonProcess("micd", "system.micd", iscar),
   PythonProcess("timed", "system.timed", always_run, enabled=True),
 
-  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=True),
+  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driver_monitoring, enabled=True),
   NativeProcess("encoderd", "system/loggerd", ["./encoderd"], only_onroad),
   NativeProcess("stream_encoderd", "system/loggerd", ["./encoderd", "--stream"], notcar),
   NativeProcess("loggerd", "system/loggerd", ["./loggerd"], logging),
@@ -56,7 +66,7 @@ procs = [
   PythonProcess("torqued", "selfdrive.locationd.torqued", only_onroad),
   PythonProcess("controlsd", "selfdrive.controls.controlsd", only_onroad),
   PythonProcess("deleter", "system.loggerd.deleter", always_run),
-  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driverview, enabled=True),
+  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", driver_monitoring, enabled=True),
   PythonProcess("alert_ledd", "system.hardware.ka2.status_led.alert_ledd", always_run, enabled=KA2),
   PythonProcess("tmuxledd", "system.hardware.ka2.tmuxledd", always_run, enabled=KA2),
   PythonProcess("pandad", "selfdrive.boardd.pandad", always_run),

@@ -115,6 +115,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"ForceOnroad", PERSISTENT},
     {"DisablePowerDown", PERSISTENT},
     {"DisableUpdates", PERSISTENT},
+    {"DisableDriverMonitoring", PERSISTENT},
     {"DisengageOnAccelerator", PERSISTENT},
     {"DmModelInitialized", CLEAR_ON_ONROAD_TRANSITION},
     {"DongleId", PERSISTENT},

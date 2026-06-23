@@ -168,7 +168,7 @@ class ManagerProcess(ABC):
 
 
 class NativeProcess(ManagerProcess):
-  def __init__(self, name, cwd, cmdline, should_run, enabled=True, sigkill=False, watchdog_max_dt=None):
+  def __init__(self, name, cwd, cmdline, should_run, enabled=True, sigkill=False, watchdog_max_dt=None, env=None):
     self.name = name
     self.cwd = cwd
     self.cmdline = cmdline
@@ -176,7 +176,9 @@ class NativeProcess(ManagerProcess):
     self.enabled = enabled
     self.sigkill = sigkill
     self.watchdog_max_dt = watchdog_max_dt
+    self.env = env
     self.launcher = nativelauncher
+    self.params = None
 
   def prepare(self) -> None:
     pass
@@ -188,6 +190,12 @@ class NativeProcess(ManagerProcess):
 
     if self.proc is not None:
       return
+
+    # Apply environment variables
+    if self.env:
+      env = self.env(self.params) if callable(self.env) else self.env
+      for k, v in env.items():
+        os.environ[k] = v
 
     cwd = os.path.join(BASEDIR, self.cwd)
     cloudlog.info(f"starting process {self.name}")
@@ -288,6 +296,8 @@ def ensure_running(procs: ValuesView[ManagerProcess], started: bool, params=None
     p.check_watchdog(started)
 
   for p in running:
+    if hasattr(p, 'params'):
+      p.params = params
     p.start()
 
   return running
