@@ -139,6 +139,9 @@ def report_tombstone_apport(fn):
 
 
 def main() -> NoReturn:
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   should_report = sentry.init(sentry.SentryProject.SELFDRIVE_NATIVE)
 
   # Clear apport folder on start, otherwise duplicate crashes won't register

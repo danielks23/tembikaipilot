@@ -4,11 +4,14 @@ from typing import NoReturn
 
 import cereal.messaging as messaging
 from openpilot.common.logging_extra import SwagLogFileFormatter
+from openpilot.common.realtime import set_core_affinity
 from openpilot.system.hardware.hw import Paths
 from openpilot.common.swaglog import get_file_handler
 
 
 def main() -> NoReturn:
+  set_core_affinity([0, 1, 2, 3])
+
   log_handler = get_file_handler()
   log_handler.setFormatter(SwagLogFileFormatter(None))
   log_level = 20  # logging.INFO

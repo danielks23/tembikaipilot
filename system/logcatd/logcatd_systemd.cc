@@ -13,6 +13,7 @@
 
 ExitHandler do_exit;
 int main(int argc, char *argv[]) {
+  util::set_core_affinity({0, 1, 2, 3});
 
   PubMaster pm({"androidLog"});
 

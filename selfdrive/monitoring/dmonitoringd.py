@@ -83,6 +83,9 @@ def dmonitoringd_thread():
       params.put_bool_nonblocking("IsRhdDetected", driver_status.wheel_on_right)
 
 def main():
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   dmonitoringd_thread()
 
 

@@ -479,6 +479,9 @@ class Streamer:
       rk.keep_time()
 
 def main():
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   Streamer().streamd_thread()
 
 if __name__ == "__main__":

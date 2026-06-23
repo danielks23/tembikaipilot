@@ -20,6 +20,9 @@ def apply_apn(apn: str | None):
     os.system("sudo udhcpc -i wwan0")
 
 def main():
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   params, prev_apn, modem_ready, startup_delay_done = Params(), None, False, False
   while True:
     if not modem_ready:

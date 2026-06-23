@@ -750,6 +750,7 @@ int Localizer::locationd_thread() {
 
 int main() {
   util::set_realtime_priority(5);
+  util::set_core_affinity({0, 1, 2, 3});
 
   Localizer localizer;
   return localizer.locationd_thread();

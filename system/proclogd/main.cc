@@ -9,6 +9,7 @@ ExitHandler do_exit;
 
 int main(int argc, char **argv) {
   setpriority(PRIO_PROCESS, 0, -15);
+  util::set_core_affinity({0, 1, 2, 3});
 
   RateKeeper rk("proclogd", 0.5);
   PubMaster publisher({"procLog"});

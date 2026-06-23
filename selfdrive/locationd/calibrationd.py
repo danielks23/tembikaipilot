@@ -16,7 +16,7 @@ from cereal import log
 import cereal.messaging as messaging
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.params import Params
-from openpilot.common.realtime import set_realtime_priority
+from openpilot.common.realtime import set_core_affinity, set_realtime_priority
 from openpilot.common.transformations.orientation import rot_from_euler, euler_from_rot
 from openpilot.common.swaglog import cloudlog
 
@@ -258,6 +258,7 @@ class Calibrator:
 def main() -> NoReturn:
   gc.disable()
   set_realtime_priority(1)
+  set_core_affinity([0, 1, 2, 3])
 
   pm = messaging.PubMaster(['liveCalibration'])
   sm = messaging.SubMaster(['cameraOdometry', 'carState', 'carParams'], poll='cameraOdometry')

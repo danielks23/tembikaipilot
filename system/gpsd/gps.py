@@ -246,6 +246,9 @@ def wait_for_modem():
 
 
 def main() -> NoReturn:
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   unpack_gps_meas, size_gps_meas = dict_unpacker(gps_measurement_report, True)
   unpack_gps_meas_sv, size_gps_meas_sv = dict_unpacker(gps_measurement_report_sv, True)
 

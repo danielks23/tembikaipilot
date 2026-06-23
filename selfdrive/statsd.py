@@ -60,6 +60,9 @@ class StatLog:
 
 
 def main() -> NoReturn:
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   dongle_id = Params().get("DongleId", encoding='utf-8')
   def get_influxdb_line(measurement: str, value: float | dict[str, float],  timestamp: datetime, tags: dict) -> str:
     res = f"{measurement}"

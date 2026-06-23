@@ -412,6 +412,9 @@ class Updater:
 
 
 def main() -> None:
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   params = Params()
 
   if params.get_bool("DisableUpdates"):

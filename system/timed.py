@@ -54,6 +54,8 @@ def main() -> NoReturn:
     GPS directly gives time, and timezone is looked up from GPS position.
     AGNOS will also use NTP to update the time.
   """
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
 
   params = Params()
   tf = TimezoneFinder()

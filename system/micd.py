@@ -97,6 +97,9 @@ class Mic:
 
 
 def main():
+  from openpilot.common.realtime import set_core_affinity
+  set_core_affinity([0, 1, 2, 3])
+
   mic = Mic()
   mic.micd_thread()
 

@@ -105,6 +105,9 @@ def stop_logging():
 
 
 def main():
+    from openpilot.common.realtime import set_core_affinity
+    set_core_affinity([0, 1, 2, 3])
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(name)s %(message)s",
