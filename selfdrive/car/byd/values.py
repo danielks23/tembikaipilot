@@ -19,7 +19,7 @@ class CAR(Platforms):
   ATTO3 = BYDPlatformConfig(
     "BYD ATTO 3",
     CarInfo("BYD Atto 3", "ALL"),
-    specs=CarSpecs(mass=2090., wheelbase=2.72, steerRatio=16.0)
+    specs=CarSpecs(mass=1875., wheelbase=2.72, steerRatio=15.0)
   )
   M6 = BYDPlatformConfig(
     "BYD M6",

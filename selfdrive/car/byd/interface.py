@@ -16,8 +16,8 @@ class CarInterface(CarInterfaceBase):
     ret.safetyConfigs[0].safetyParam = 1
 
     ret.steerControlType = car.CarParams.SteerControlType.angle
-    ret.steerLimitTimer = 0.6              # time before steerLimitAlert is issued
-    ret.steerActuatorDelay = 0.01          # Steering wheel actuator delay in seconds
+    ret.steerLimitTimer = 0.8              # time before steerLimitAlert is issued (0.8s avoids false alarms on sharp curves)
+    ret.steerActuatorDelay = 0.10          # EPS mechanical+electrical delay ~100ms
 
     ret.lateralTuning.init('pid')
 
@@ -35,36 +35,51 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiV = [0.5, 0.4, 0.3]
 
     ret.lateralTuning.pid.kf = 0.00015
-    ret.longitudinalActuatorDelayLowerBound = 0.2
-    ret.longitudinalActuatorDelayUpperBound = 0.3
-
-    ret.wheelSpeedFactor = 0.66 # was 0.695
+    ret.longitudinalActuatorDelayLowerBound = 0.1
+    ret.longitudinalActuatorDelayUpperBound = 0.2
+    ret.wheelSpeedFactor = 0.66
 
     if candidate == CAR.ATTO3:
-      ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
+      ret.centerToFront = ret.wheelbase * 0.48  # EV: floor battery = near 50/50 weight dist
+      ret.longitudinalActuatorDelayLowerBound = 0.08  # EV instant torque: faster than ICE
+      ret.longitudinalActuatorDelayUpperBound = 0.16
+      ret.wheelSpeedFactor = 0.660
+      ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
+      ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
+      ret.longitudinalTuning.kpV = [0.7, 0.6, 0.4]
+      ret.longitudinalTuning.kiV = [0.10, 0.08, 0.05]  # EV: low ki reduces accel/brake hunting
+      ret.longitudinalTuning.deadzoneBP = [0., 8.33, 16.67, 25.0]
+      ret.longitudinalTuning.deadzoneV  = [0., 0.42,  0.83,  1.25]
+      ret.startingState = True
+      ret.startAccel = 2.0
+      ret.stoppingDecelRate = 0.6  # EV: 0.6 m/s²/s — firm enough for traffic lights
+      ret.minEnableSpeed = -1
+      ret.enableBsm = True
     elif candidate == CAR.M6:
-      ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
-
+      ret.lateralTuning.pid.kpV = [1.5, 1.4, 1.1]
+      ret.lateralTuning.pid.kiV = [0.52, 0.43, 0.32]
       ret.longitudinalTuning.kpV = [1.2, 1.0, 0.8]
+      ret.longitudinalTuning.kiV = [0.5, 0.4, 0.3]
       ret.longitudinalTuning.deadzoneBP = [0., 9.]
       ret.longitudinalTuning.deadzoneV = [0., 0.15]
 
       ret.safetyConfigs[0].safetyParam = 3
+      ret.startingState = True
+      ret.startAccel = 3.0
+      ret.stoppingDecelRate = 0.3
+      ret.minEnableSpeed = -1
+      ret.enableBsm = True
     elif candidate in (CAR.SEAL, CAR.SEALION7):
       ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kpV = [[0.52, 0.43, 0.32], [1.5, 1.4, 1.1]]
 
       ret.safetyConfigs[0].safetyParam = 2
       ret.openpilotLongitudinalControl = False
       ret.radarUnavailable = True
+      ret.minEnableSpeed = -1
+      ret.enableBsm = True
     else:
       ret.dashcamOnly = True
       ret.safetyModel = car.CarParams.SafetyModel.noOutput
-
-    ret.startingState = True
-    ret.startAccel = 3.0
-    ret.minEnableSpeed = -1
-    ret.enableBsm = True
-    ret.stoppingDecelRate = 0.2 # reach stopping target smoothly
 
     return ret
 

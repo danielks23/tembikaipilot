@@ -35,7 +35,7 @@ class CarState(CarStateBase):
     self.lka_on = cp_cam.vl["LKAS_HUD_ADAS"]['STEER_ACTIVE_ACTIVE_LOW']
 
     self.lkas_rdy_btn = cp.vl["PCM_BUTTONS"]['LKAS_ON_BTN']
-    self.abh = cp_cam.vl["LKAS_HUD_ADAS"]['SET_ME_XFF']
+    self.ahb = cp_cam.vl["LKAS_HUD_ADAS"]['SET_ME_XFF']
     self.passthrough = cp_cam.vl["LKAS_HUD_ADAS"]['TSR_STATUS']
     self.HMA = cp_cam.vl["LKAS_HUD_ADAS"]['HMA']
     self.pt2 = cp_cam.vl["LKAS_HUD_ADAS"]['PT2']
@@ -51,7 +51,9 @@ class CarState(CarStateBase):
       parser_alt = cp_cam
     else:
       parser_alt = cp
-      self.op_long = False
+
+    # Use CP flag for consistency
+    self.op_long = self.CP.openpilotLongitudinalControl
 
 
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -115,9 +117,12 @@ class CarState(CarStateBase):
     if bool(parser_alt.vl["ACC_CMD"]["ACC_REQ_NOT_STANDSTILL"]):
       self.is_cruise_latch = True
 
+    # BYD minimum set speed is 30 km/h (stock ACC limitation)
+    MIN_SET_SPEED_KPH = 30
+
     # byd speedCluster will follow wheelspeed if cruiseState is not available
     if ret.cruiseState.available:
-      ret.cruiseState.speedCluster = max(int(parser_alt.vl["ACC_HUD_ADAS"]['SET_SPEED']), 30) * CV.KPH_TO_MS
+      ret.cruiseState.speedCluster = max(int(parser_alt.vl["ACC_HUD_ADAS"]['SET_SPEED']), MIN_SET_SPEED_KPH) * CV.KPH_TO_MS
     else:
       ret.cruiseState.speedCluster = 0
 
@@ -129,7 +134,7 @@ class CarState(CarStateBase):
     if not ret.cruiseState.available or ret.brakePressed or not stock_acc_on:
       self.is_cruise_latch = False
 
-    if self.CP.carFingerprint in (CAR.SEAL, CAR.SEALION7 , CAR.M6):
+    if self.CP.carFingerprint in (CAR.SEAL, CAR.SEALION7, CAR.M6):
       cruise_state = parser_alt.vl["ACC_HUD_ADAS"]["CRUISE_STATE"]
       ret.cruiseState.enabled = cruise_state in (3, 5, 6, 7)
     else:
